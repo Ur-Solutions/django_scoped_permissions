@@ -14,9 +14,8 @@ class AttachCompanyMiddleware(object):
 
         ### TESTING
         request.company = Company.objects.first()
+        return
         ###
-
-        return  # Skip everything for now
 
         if "HTTP_REFERER" in request.META:
             company_match = company_matching_regex.search(request.META["HTTP_REFERER"])

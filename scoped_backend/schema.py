@@ -1,10 +1,11 @@
 import graphene
 
+from permissions.schema import ScopedPermissionQuery
 from users.schema import UserQuery, UserMutations
 
 
 class Query(
-    UserQuery, graphene.ObjectType,
+    ScopedPermissionQuery, UserQuery, graphene.ObjectType,
 ):
     pass
 

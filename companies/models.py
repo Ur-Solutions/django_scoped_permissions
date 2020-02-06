@@ -14,3 +14,7 @@ class Company(models.Model):
     users = models.ManyToManyField("users.User", related_name="companies")
 
     email = models.CharField(max_length=256, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
