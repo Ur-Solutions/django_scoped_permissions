@@ -19,3 +19,6 @@ class Pet(ScopedModelMixin, models.Model):
             create_scope("user", self.user.id, "pet", self.id),
             create_scope("company", self.company.id, "pet", self.id),
         ]
+
+    def __str__(self):
+        return self.name
