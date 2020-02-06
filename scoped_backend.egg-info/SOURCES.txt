@@ -1,0 +1,10 @@
+setup.py
+scoped_backend/__init__.py
+scoped_backend/settings.py
+scoped_backend/urls.py
+scoped_backend/wsgi.py
+scoped_backend.egg-info/PKG-INFO
+scoped_backend.egg-info/SOURCES.txt
+scoped_backend.egg-info/dependency_links.txt
+scoped_backend.egg-info/requires.txt
+scoped_backend.egg-info/top_level.txt
