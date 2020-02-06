@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "graphene_django",
     "permissions",
     "companies",
     "users",
@@ -51,6 +52,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "authentication.middleware.JwtProviderMiddleware",
+    "companies.middleware.AttachCompanyMiddleware",
 ]
 
 ROOT_URLCONF = "scoped_backend.urls"
@@ -73,6 +76,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "scoped_backend.wsgi.application"
 
+# Graphql
+GRAPHENE = {"SCHEMA": "scoped_backend.schema.schema"}
+
+AUTH_JWT_HEADER_PREFIX = "Bearer"
+AUTH_JWT_SECRET = "notreallysecret"
+AUTH_JWT_METHOD = "HS256"
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases

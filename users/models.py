@@ -18,6 +18,10 @@ class User(HasScopedPermissionsMixin, AbstractUser):
 
     def get_scopes(self):
         base_scopes = super().get_scopes()
+
+        for user_type in self.user_types.all():
+            base_scopes.extend(user_type.get_scopes())
+
         base_scopes.append(f"user:{self.id}")
         return base_scopes
 
@@ -32,9 +36,11 @@ class User(HasScopedPermissionsMixin, AbstractUser):
         return "User %s" % (self.username,)
 
 
-class UserTypes(ScopedModelMixin, models.Model):
+class UserType(HasScopedPermissionsMixin, ScopedModelMixin, models.Model):
     class Meta:
         pass
+
+    name = models.CharField(max_length=128)
 
     company = models.ForeignKey(
         "companies.Company", on_delete=models.CASCADE, related_name="user_types"
