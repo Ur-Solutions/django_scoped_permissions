@@ -20,9 +20,13 @@ class UserNode(DjangoObjectType):
         model = User
         interfaces = (Node,)
 
+    scopes = graphene.List(graphene.String)
+
+    def resolve_scopes(self, info, *args, **kwargs):
+        return self.get_scopes()
+
     @classmethod
     def get_node(cls, info, id):
-        print(vars(info.context))
         return User.objects.get(pk=id)
 
 
