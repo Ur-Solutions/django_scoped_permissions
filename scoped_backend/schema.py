@@ -2,16 +2,17 @@ import graphene
 
 from permissions.schema import ScopedPermissionQuery
 from users.schema import UserQuery, UserMutations
+from pets.schema import PetQuery, PetMutations
 
 
 class Query(
-    ScopedPermissionQuery, UserQuery, graphene.ObjectType,
+    ScopedPermissionQuery, UserQuery, PetQuery, graphene.ObjectType,
 ):
     pass
 
 
 class Mutation(
-    UserMutations, graphene.ObjectType,
+    UserMutations, PetMutations, graphene.ObjectType,
 ):
     pass
 
