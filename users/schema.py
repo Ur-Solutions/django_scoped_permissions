@@ -87,8 +87,33 @@ class DeleteUserMutation(DjangoDeleteMutation):
         model = User
 
 
+class CreateUserTypeMutation(DjangoCreateMutation):
+    class Meta:
+        model = UserType
+
+
+class UpdateUserTypeMutation(DjangoUpdateMutation):
+    class Meta:
+        model = UserType
+
+
+class PatchUserTypeMutation(DjangoPatchMutation):
+    class Meta:
+        model = UserType
+
+
+class DeleteUserTypeMutation(DjangoDeleteMutation):
+    class Meta:
+        model = UserType
+
+
 class UserMutations(graphene.ObjectType):
     create_user = CreateUserMutation.Field()
     update_user = UpdateUserMutation.Field()
     patch_user = PatchUserMutation.Field()
     delete_user = DeleteUserMutation.Field()
+
+    create_user_type = CreateUserTypeMutation.Field()
+    update_user_type = UpdateUserTypeMutation.Field()
+    patch_user_type = PatchUserTypeMutation.Field()
+    delete_user_type = DeleteUserTypeMutation.Field()
