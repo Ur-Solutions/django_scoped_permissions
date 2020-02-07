@@ -8,8 +8,9 @@ class Pet(ScopedModelMixin, models.Model):
     class Meta:
         pass
 
-    company = models.ForeignKey("companies.Company", on_delete=models.CASCADE)
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="pets"
+    )
 
     name = models.CharField(max_length=128)
     age = models.PositiveIntegerField()
@@ -18,7 +19,6 @@ class Pet(ScopedModelMixin, models.Model):
         return [
             create_scope("pet", self.id),
             create_scope("user", self.user.id, "pet", self.id),
-            create_scope("company", self.company.id, "pet", self.id),
         ]
 
     def __str__(self):
