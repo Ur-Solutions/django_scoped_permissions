@@ -46,8 +46,12 @@ class UserTypeNode(DjangoObjectType):
 
 
 class UserQuery(graphene.ObjectType):
+    me = graphene.Field(UserNode)
     user = Node.Field(UserNode)
     all_users = DjangoConnectionField(UserNode)
+
+    def resolve_me(self, info, *args, **kwargs):
+        return info.context.user
 
     def resolve_all_users(self, info, *args, **kwargs):
         return User.objects.filter(companies=info.context.company)
