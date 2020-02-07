@@ -1,6 +1,7 @@
 from django.db import models
 
 from permissions.models import ScopedModelMixin
+from permissions.util import create_scope
 
 
 class Pet(ScopedModelMixin, models.Model):
