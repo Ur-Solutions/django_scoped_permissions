@@ -2,7 +2,7 @@ from django.db import models
 
 from typing import Optional, Any
 
-from django.db import models
+from permissions.util import any_scope_matches, expand_scopes_with_action
 
 
 class ScopedPermission(models.Model):
@@ -39,6 +39,9 @@ class ScopedModelMixin(models.Model):
     def has_permission(
         self, user: HasScopedPermissionsMixin, action: Optional[str] = None
     ):
+        if getattr(user, "is_superuser", False):
+            return True
+
         user_scopes = user.get_scopes()
         base_scopes = self.get_base_scopes()
         base_scopes = expand_scopes_with_action(base_scopes, action)
