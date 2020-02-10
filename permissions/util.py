@@ -81,3 +81,22 @@ def create_scope(*args: [Any]):
     :return:
     """
     return ":".join([str(arg) for arg in args])
+
+
+def read_scoped(qs, user, company, filter_fields={}):
+    if user.is_superuser:
+        return qs
+
+    model_name = qs.model._meta.model_name
+    user_scopes = user.get_scopes()
+
+    negated_read_scope = f"-{model_name}:read"
+    if negated_read_scope in user_scopes:
+        return qs.none()
+
+    read_scopes = [f"{model_name}:read", f"company:{company.id}", "read"]
+    scope_match = any_scope_matches(read_scopes, user_scopes)
+    if scope_match:
+        return qs
+
+    return qs.filter(**filter_fields)
