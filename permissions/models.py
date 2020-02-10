@@ -8,6 +8,9 @@ from permissions.util import any_scope_matches, expand_scopes_with_action
 
 
 class ScopedPermission(models.Model):
+    class Meta:
+        unique_together = (("scope", "exclude"),)
+
     scope = models.TextField(blank=False)
     exclude = models.BooleanField(
         default=False,
@@ -18,7 +21,7 @@ class ScopedPermission(models.Model):
         return self.scope.split(":")
 
     def __str__(self):
-        return self.scope
+        return ("-" if self.exclude else "") + self.scope
 
 
 class HasScopedPermissionsMixin(models.Model):
