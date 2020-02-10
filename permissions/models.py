@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Value, F, Case, When
+from django.db.models.functions import Concat
 
 from typing import Optional, Any
 
@@ -26,9 +28,23 @@ class HasScopedPermissionsMixin(models.Model):
     scoped_permissions = models.ManyToManyField(ScopedPermission, blank=True,)
 
     def get_scopes(self):
-        specific_scopes = list(self.scoped_permissions.values_list("scope", flat=True))
+        scopes = self.scoped_permissions
+        scopes = scopes.annotate(
+            parsed_scope=Concat(
+                Case(When(exclude=True, then=Value("-")), default=Value("")), F("scope")
+            )
+        )
+
+        specific_scopes = list(scopes.values_list("parsed_scope", flat=True))
 
         return specific_scopes
+
+    def has_create_permission(self, model_name: str, action: str = "create"):
+        scopes = self.get_scopes()
+        return f"-{model_name}:{action}" not in scopes
+
+
+# from users.models import User; user = User.objects.get(pk=2)
 
 
 class ScopedModelMixin(models.Model):

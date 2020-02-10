@@ -71,7 +71,7 @@ def scope_matches(required_scope: str, scope: str):
     :param scope:
     :return:
     """
-    return scope in required_scope
+    return scope[0] != "-" and scope in required_scope
 
 
 def create_scope(*args: [Any]):
