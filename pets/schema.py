@@ -13,6 +13,7 @@ from permissions.scoped_mutations import (
     ScopedDjangoUpdateMutation,
     ScopedDjangoDeleteMutation,
 )
+from permissions.util import read_scoped
 
 from pets.models import Pet
 
@@ -32,7 +33,9 @@ class PetQuery(graphene.ObjectType):
     all_pets = DjangoConnectionField(PetNode)
 
     def resolve_all_pets(self, info, *args, **kwargs):
-        return Pet.objects.all()
+        user = info.context.user
+        company = info.context.company
+        return read_scoped(Pet.objects.all(), user, company, {"user": user})
 
 
 class CreatePetMutation(ScopedDjangoCreateMutation):
