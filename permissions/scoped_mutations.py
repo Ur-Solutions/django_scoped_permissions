@@ -7,8 +7,6 @@ from graphene_django_cud.mutations import (
     DjangoDeleteMutation,
 )
 
-from permissions.util import any_scope_matches
-
 
 class ScopedDjangoCreateMutation(DjangoCreateMutation):
     class Meta:
