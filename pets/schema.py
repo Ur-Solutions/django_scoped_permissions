@@ -7,7 +7,12 @@ from graphene_django_cud.mutations import (
     DjangoUpdateMutation,
     DjangoDeleteMutation,
 )
-from permissions.scoped_mutations import ScopedDjangoPatchMutation
+from permissions.scoped_mutations import (
+    ScopedDjangoCreateMutation,
+    ScopedDjangoPatchMutation,
+    ScopedDjangoUpdateMutation,
+    ScopedDjangoDeleteMutation,
+)
 
 from pets.models import Pet
 
@@ -30,12 +35,7 @@ class PetQuery(graphene.ObjectType):
         return Pet.objects.all()
 
 
-class CreatePetMutation(DjangoCreateMutation):
-    class Meta:
-        model = Pet
-
-
-class UpdatePetMutation(DjangoUpdateMutation):
+class CreatePetMutation(ScopedDjangoCreateMutation):
     class Meta:
         model = Pet
 
@@ -45,7 +45,12 @@ class PatchPetMutation(ScopedDjangoPatchMutation):
         model = Pet
 
 
-class DeletePetMutation(DjangoDeleteMutation):
+class UpdatePetMutation(ScopedDjangoUpdateMutation):
+    class Meta:
+        model = Pet
+
+
+class DeletePetMutation(ScopedDjangoDeleteMutation):
     class Meta:
         model = Pet
 
