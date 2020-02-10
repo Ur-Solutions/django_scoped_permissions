@@ -52,7 +52,7 @@ def expand_scopes_with_action(scopes: [str], action: str):
 def scope_matches(required_scope: str, scope: str):
     """
     Checks if two scopes match. They match if and only if the following is true:
-        All parts of required_scope are contained in scope, in the same order as supplied in required_scope
+        All parts of required_scope are contained in scope, in the same order as supplied in required_scope, and scope does not begin with "-"
     Fortunately we can check this easily using the in operator.
     Examples:
         required    = users:1:edit
