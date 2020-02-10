@@ -8,7 +8,7 @@ from permissions.util import any_scope_matches, expand_scopes_with_action
 
 
 class ScopedPermission(models.Model):
-    scope = models.TextField(unique=True, blank=False)
+    scope = models.TextField(blank=False)
     exclude = models.BooleanField(
         default=False,
         help_text="Whether this should be an exclusive permission, meaning that if scope is 'user:update' and exclude is True then users with this usertype will not be able to update users, even their own.",
