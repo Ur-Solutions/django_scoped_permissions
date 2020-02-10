@@ -7,6 +7,7 @@ from graphene_django_cud.mutations import (
     DjangoUpdateMutation,
     DjangoDeleteMutation,
 )
+from permissions.scoped_mutations import ScopedDjangoPatchMutation
 
 from pets.models import Pet
 
@@ -39,7 +40,7 @@ class UpdatePetMutation(DjangoUpdateMutation):
         model = Pet
 
 
-class PatchPetMutation(DjangoPatchMutation):
+class PatchPetMutation(ScopedDjangoPatchMutation):
     class Meta:
         model = Pet
 
