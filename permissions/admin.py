@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from permissions.models import ScopedPermission
+
+admin.site.register(ScopedPermission)
