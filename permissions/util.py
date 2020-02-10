@@ -9,11 +9,9 @@ def any_scope_matches(required_scopes: [str], scopes: [str]):
     :return:
     """
     return any(
-        [
-            scope_matches(required_scope, scope)
-            for required_scope in required_scopes
-            for scope in scopes
-        ]
+        scope_matches(required_scope, scope)
+        for required_scope in required_scopes
+        for scope in scopes
     )
 
 
