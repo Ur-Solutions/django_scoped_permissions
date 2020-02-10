@@ -7,6 +7,8 @@ from graphene_django_cud.mutations import (
     DjangoDeleteMutation,
 )
 
+from permissions.util import any_scope_matches
+
 
 class ScopedDjangoCreateMutation(DjangoCreateMutation):
     class Meta:
@@ -17,13 +19,7 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
         user = info.context.user
         model = cls._meta.model
         model_name = model._meta.model_name
-        scopes = user.user_types.values_list(
-            "scoped_permissions__scope", flat=True
-        ).distinct()
-        has_permission = scopes.filter(
-            scoped_permissions__scope=f"{model_name}:create"
-        ).exists()
-        if not has_permission:
+        if not user.has_create_permission(model_name, "create"):
             fail_message = getattr(
                 cls._meta,
                 "fail_message",
