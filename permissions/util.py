@@ -1,4 +1,6 @@
 from typing import Any
+from django.db.models import Model
+from django.db.models.base import ModelBase
 
 
 def any_scope_matches(required_scopes: [str], scopes: [str]):
@@ -74,13 +76,19 @@ def scope_matches(required_scope: str, scope: str):
     return scope[0] != "-" and scope in required_scope
 
 
+def get_scope_arg_str(arg):
+    if isinstance(arg, Model) or isinstance(arg, ModelBase):
+        return arg._meta.model_name
+    return str(arg)
+
+
 def create_scope(*args: [Any]):
     """
     Converts a list of scopes into a scope-string.
     :param args:
     :return:
     """
-    return ":".join([str(arg) for arg in args])
+    return ":".join([get_scope_arg_str(arg) for arg in args])
 
 
 def read_scoped(qs, user, company, filter_fields={}):
