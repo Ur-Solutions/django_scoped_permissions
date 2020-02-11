@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "companies",
     "users",
     "pets",
+    "forum",
 ]
 
 MIDDLEWARE = [
