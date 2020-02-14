@@ -26,7 +26,7 @@ class UserNode(DjangoObjectType):
 
     scopes = graphene.List(graphene.String)
 
-    def resolve_scopes(self, info, *args, **kwargs):
+    def resolve_scopes(self: User, info, *args, **kwargs):
         return self.get_scopes()
 
     @classmethod
