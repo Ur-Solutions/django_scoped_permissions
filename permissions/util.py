@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 from django.db.models import Model
 from django.db.models.base import ModelBase
 
@@ -6,14 +6,34 @@ from django.db.models.base import ModelBase
 def any_scope_matches(required_scopes: [str], scopes: [str]):
     """
     Check if any of the given scopes matches any of the required_scopes.
+
+    We also check whether or not any of the exclude scope in `scopes` matches
+    a scope in `required_scopes`. If this is true, we return False
+
     :param required_scopes:
     :param scopes:
     :return:
     """
-    return any(
+    include_scopes = []
+    exclude_scopes = []
+
+    for scope in scopes:
+        if scope[0] == "-":
+            # Remove leading "-", as all checks here-on-out knows that this is an exclude scope
+            # due to it being in the exclude_scopes-array
+            exclude_scopes.append(scope[1:])
+        else:
+            include_scopes.append(scope)
+
+
+    return not any(
         scope_matches(required_scope, scope)
         for required_scope in required_scopes
-        for scope in scopes
+        for scope in exclude_scopes
+    ) and any(
+        scope_matches(required_scopes, scope)
+        for required_scope in required_scopes
+        for scope in include_scopes
     )
 
 
@@ -54,8 +74,10 @@ def expand_scopes_with_action(scopes: [str], action: str):
 def scope_matches(required_scope: str, scope: str):
     """
     Checks if two scopes match. They match if and only if the following is true:
-        All parts of required_scope are contained in scope, in the same order as supplied in required_scope, and scope does not begin with "-"
-    Fortunately we can check this easily using the in operator.
+
+        - All parts of required_scope are contained in scope, in the same order as supplied in required_scope.
+        - If the scope starts with =, it must match the required scope exactly.
+
     Examples:
         required    = users:1:edit
         scope       = users:1
@@ -69,14 +91,22 @@ def scope_matches(required_scope: str, scope: str):
         required    = company:1:timesheets:create
         scope       = company:1
         OK
+
     :param required_scope:
     :param scope:
     :return:
     """
-    return scope[0] != "-" and scope in required_scope
+    if scope[0] == "=":
+        return required_scope == scope[1:]
+
+    return scope in required_scope
 
 
-def get_scope_arg_str(arg):
+def get_scope_arg_str(arg: Union[str, Model, ModelBase]):
+    """
+    Converts a scope argument into a string.
+    For models and modelbases we lookup the model name.
+    """
     if isinstance(arg, Model) or isinstance(arg, ModelBase):
         return arg._meta.model_name
     return str(arg)

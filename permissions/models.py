@@ -16,12 +16,18 @@ class ScopedPermission(models.Model):
         default=False,
         help_text="Whether this should be an exclusive permission, meaning that if scope is 'user:update' and exclude is True then users with this usertype will not be able to update users, even their own.",
     )
+    exact = models.BooleanField(
+        default=False,
+        help_text="If checked, the permission needs an exact match to count. In other words, it does not work recursively as standard scoped permissions."
+    )
 
     def get_scope_parts(self):
         return self.scope.split(":")
 
     def __str__(self):
-        return ("-" if self.exclude else "") + self.scope
+        prefix = ("-" if self.exclude else "")
+        prefix += ("=" if self.exact else "")
+        return prefix + self.scope
 
 
 class HasScopedPermissionsMixin(models.Model):
@@ -34,7 +40,9 @@ class HasScopedPermissionsMixin(models.Model):
         scopes = self.scoped_permissions
         scopes = scopes.annotate(
             parsed_scope=Concat(
-                Case(When(exclude=True, then=Value("-")), default=Value("")), F("scope")
+                Case(When(exclude=True, then=Value("-")), default=Value("")),
+                Case(When(exact=True, then=Value("=")), default=Value("")),
+                F("scope")
             )
         )
 
