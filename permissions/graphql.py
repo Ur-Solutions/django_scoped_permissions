@@ -1,4 +1,5 @@
-from django.core.exceptions import FieldDoesNotExist
+import graphene
+from graphene_django import DjangoObjectType
 from graphql import GraphQLError
 from graphene_django_cud.util import disambiguate_id
 from graphene_django_cud.mutations import (
