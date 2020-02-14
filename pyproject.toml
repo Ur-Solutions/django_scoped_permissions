@@ -14,6 +14,7 @@ pyjwt = "^1.7.1"
 factory_boy = "^2.12.0"
 
 [tool.poetry.dev-dependencies]
+addict = "^2.2.1"
 
 [build-system]
 requires = ["poetry>=0.12"]
