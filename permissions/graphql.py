@@ -1,7 +1,9 @@
+from django.core.exceptions import FieldDoesNotExist
 from graphql import GraphQLError
 from graphene_django_cud.util import disambiguate_id
 from graphene_django_cud.mutations import (
     DjangoCreateMutation,
+    DjangoBatchCreateMutation,
     DjangoPatchMutation,
     DjangoUpdateMutation,
     DjangoDeleteMutation,
@@ -22,6 +24,26 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
                 cls._meta,
                 "fail_message",
                 "You do not have permission to create this object",
+            )
+            raise GraphQLError(fail_message)
+
+        return super().mutate(root, info, input)
+
+
+class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def mutate(cls, root, info, input):
+        user = info.context.user
+        model = cls._meta.model
+        model_name = model._meta.model_name
+        if not user.has_create_permission(model_name, "create"):
+            fail_message = getattr(
+                cls._meta,
+                "fail_message",
+                "You do not have permission to create these objects",
             )
             raise GraphQLError(fail_message)
 
@@ -86,3 +108,13 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
             raise GraphQLError(fail_message)
 
         return super().mutate(root, info, id)
+
+
+class ScopedModelNode(DjangoObjectType):
+    class Meta:
+        abstract = True
+
+    base_scopes = graphene.List(graphene.String)
+
+    def resolve_base_scopes(self, info, **kwargs):
+        return self.get_base_scopes()

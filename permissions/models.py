@@ -47,9 +47,6 @@ class HasScopedPermissionsMixin(models.Model):
         return f"-{model_name}:{action}" not in scopes
 
 
-# from users.models import User; user = User.objects.get(pk=2)
-
-
 class ScopedModelMixin(models.Model):
     """Mixin for a model with scoped permission."""
 

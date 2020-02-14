@@ -7,11 +7,12 @@ from graphene_django_cud.mutations import (
     DjangoUpdateMutation,
     DjangoDeleteMutation,
 )
-from permissions.scoped_mutations import (
+from permissions.graphql import (
     ScopedDjangoCreateMutation,
     ScopedDjangoPatchMutation,
     ScopedDjangoUpdateMutation,
     ScopedDjangoDeleteMutation,
+    ScopedDjangoBatchDeleteMutation,
 )
 from permissions.util import read_scoped
 
@@ -58,8 +59,15 @@ class DeletePetMutation(ScopedDjangoDeleteMutation):
         model = Pet
 
 
+class BatchDeletePetMutation(ScopedDjangoBatchDeleteMutation):
+    class Meta:
+        model = Pet
+        filter_fields = ("id__in",)
+
+
 class PetMutations(graphene.ObjectType):
     create_pet = CreatePetMutation.Field()
     update_pet = UpdatePetMutation.Field()
     patch_pet = PatchPetMutation.Field()
     delete_pet = DeletePetMutation.Field()
+    batch_delete_pet = BatchDeletePetMutation.Field()
