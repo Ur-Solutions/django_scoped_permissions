@@ -50,6 +50,25 @@ class HasScopedPermissionsMixin(models.Model):
 
         return specific_scopes
 
+
+    def has_scoped_permissions(self, *required_scopes):
+        return self.has_any_scoped_permissions(*required_scopes)
+
+    def has_any_scoped_permissions(self, *required_scopes):
+        scopes = self.get_scopes()
+
+        return any_scope_matches(required_scopes, scopes)
+
+    def has_all_scoped_permissions(self, *required_scopes):
+        scopes = self.get_scopes()
+
+        for scope in required_scopes:
+            if not any_scope_matches([scope], scopes):
+                print(scope, scopes)
+                return False
+
+        return True
+
     def has_create_permission(self, model_name: str, action: str = "create"):
         scopes = self.get_scopes()
         return f"-{model_name}:{action}" not in scopes

@@ -25,13 +25,12 @@ def any_scope_matches(required_scopes: [str], scopes: [str]):
         else:
             include_scopes.append(scope)
 
-
     return not any(
         scope_matches(required_scope, scope)
         for required_scope in required_scopes
         for scope in exclude_scopes
     ) and any(
-        scope_matches(required_scopes, scope)
+        scope_matches(required_scope, scope)
         for required_scope in required_scopes
         for scope in include_scopes
     )
