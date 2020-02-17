@@ -9,7 +9,7 @@ from permissions.util import any_scope_matches, expand_scopes_with_action
 
 class ScopedPermission(models.Model):
     class Meta:
-        unique_together = (("scope", "exclude"),)
+        unique_together = (("scope", "exclude", "exact"),)
 
     scope = models.TextField(blank=False)
     exclude = models.BooleanField(
@@ -18,15 +18,15 @@ class ScopedPermission(models.Model):
     )
     exact = models.BooleanField(
         default=False,
-        help_text="If checked, the permission needs an exact match to count. In other words, it does not work recursively as standard scoped permissions."
+        help_text="If checked, the permission needs an exact match to count. In other words, it does not work recursively as standard scoped permissions.",
     )
 
     def get_scope_parts(self):
         return self.scope.split(":")
 
     def __str__(self):
-        prefix = ("-" if self.exclude else "")
-        prefix += ("=" if self.exact else "")
+        prefix = "-" if self.exclude else ""
+        prefix += "=" if self.exact else ""
         return prefix + self.scope
 
 
@@ -42,7 +42,7 @@ class HasScopedPermissionsMixin(models.Model):
             parsed_scope=Concat(
                 Case(When(exclude=True, then=Value("-")), default=Value("")),
                 Case(When(exact=True, then=Value("=")), default=Value("")),
-                F("scope")
+                F("scope"),
             )
         )
 
