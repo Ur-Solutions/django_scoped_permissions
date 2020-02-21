@@ -138,3 +138,6 @@ dmypy.json
 
 #Vscode
 .vscode
+
+# sqlite
+*.sqlite
