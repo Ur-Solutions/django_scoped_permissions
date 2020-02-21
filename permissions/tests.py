@@ -6,51 +6,52 @@ from graphene_django_cud.tests.factories import UserFactory
 
 from permissions.decorators import gql_has_scoped_permissions, gql_has_all_scoped_permissions
 from permissions.models import ScopedPermission
-from permissions.util import any_scope_matches
+from permissions.util import scopes_grant_permissions
+from pets.factories import PetFactory
 
 
-class TestAnyScopeMatches(TestCase):
+class TestScopesGrantPermission(TestCase):
     def test__equal_scopes_match__returns_true(self):
         scopes = ["scope1:action"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), True)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), True)
 
     def test__scope_contained_in_required__returns_true(self):
         scopes = ["scope1"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), True)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), True)
 
     def test__no_matching_scope__returns_false(self):
         scopes = ["scope3"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), False)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), False)
 
     def test__scoped_has_negation__invalidates_and_returns_false(self):
         scopes = ["scope1", "-scope1:action"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), False)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), False)
 
     def test__scoped_has_high_level_negation__invalidates_and_returns_false(self):
         scopes = ["scope1:action", "-scope1"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), False)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), False)
 
     def test__scoped_has_exact_operator__returns_true_on_exact_match(self):
         scopes = ["=scope1:action"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), True)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), True)
 
     def test__scoped_has_exact_operator__returns_false_on_exact_match(self):
         scopes = ["=scope1"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), False)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), False)
 
     def test__scoped_has_exact_operator_and_negation__returns_false_on_exact_match(
         self,
     ):
         scopes = ["-=scope1:action"]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), False)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), False)
 
     def test__scoped_has_exact_operator_and_negation__returns_true_on_hierarchical_match(
         self,
@@ -60,7 +61,7 @@ class TestAnyScopeMatches(TestCase):
             "-=scope1",
         ]
         required_scopes = ["scope2", "scope1:action"]
-        self.assertEqual(any_scope_matches(required_scopes, scopes), True)
+        self.assertEqual(scopes_grant_permissions(required_scopes, scopes), True)
 
 
 class TestHasScopedPermissionsMixin(TestCase):
@@ -72,7 +73,7 @@ class TestHasScopedPermissionsMixin(TestCase):
             user.get_scopes(), ["user:1"]
         )
 
-    def get_scopes__simple_scopes__returns_array(self):
+    def test_get_scopes__simple_scopes__returns_array(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(scope="simple:scope")
@@ -86,7 +87,7 @@ class TestHasScopedPermissionsMixin(TestCase):
             user.get_scopes(), ["simple:scope", "simple:scope:deep", "user:1"]
         )
 
-    def get_scopes__exclude_scopes__appends_minus_signs(self):
+    def test_get_scopes__exclude_scopes__appends_minus_signs(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(scope="simple:scope", exclude=True)
@@ -100,7 +101,7 @@ class TestHasScopedPermissionsMixin(TestCase):
             user.get_scopes(), ["-simple:scope", "-simple:scope:deep", "user:1"]
         )
 
-    def get_scopes__exact_scopes__appends_equal_sign(self):
+    def test_get_scopes__exact_scopes__appends_equal_sign(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(scope="simple:scope", exact=True)
@@ -114,7 +115,7 @@ class TestHasScopedPermissionsMixin(TestCase):
             user.get_scopes(), ["=simple:scope", "=simple:scope:deep", "user:1"]
         )
 
-    def get_scopes__exact_and_negation_scopes__appends_equal_and_minus_sign(self):
+    def test_get_scopes__exact_and_negation_scopes__appends_equal_and_minus_sign(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(scope="simple:scope", exclude=True, exact=True)
@@ -127,6 +128,25 @@ class TestHasScopedPermissionsMixin(TestCase):
         self.assertListEqual(
             user.get_scopes(), ["-=simple:scope", "-=simple:scope:deep", "user:1"]
         )
+
+class TestScopedModelMixin(TestCase):
+    def test_has_permission__user_has_exclude_on_specific_top_level_scope__does_not_cascade(self):
+        user = UserFactory.create()
+        user.scoped_permissions.add(
+            ScopedPermission.objects.create(scope="user:1:update", exclude=True, exact=True)
+        )
+
+        pet = PetFactory.create(user=user)
+        self.assertTrue(pet.has_permission(user, "update"))
+
+    def test_has_permission__user_has_exclude_on_specific_top_level_scope_without_action__does_not_cascade(self):
+        user = UserFactory.create()
+        user.scoped_permissions.add(
+            ScopedPermission.objects.create(scope="user:1", exclude=True, exact=True)
+        )
+
+        pet = PetFactory.create(user=user)
+        self.assertTrue(pet.has_permission(user))
 
 
 class TestGqlHasScopedPermissions(TestCase):

@@ -4,7 +4,7 @@ from django.db.models.functions import Concat
 
 from typing import Optional, Any
 
-from permissions.util import any_scope_matches, expand_scopes_with_action
+from permissions.util import any_scope_matches, expand_scopes_with_action_recursively, scopes_grant_permissions
 
 
 class ScopedPermission(models.Model):
@@ -91,7 +91,6 @@ class ScopedModelMixin(models.Model):
 
         user_scopes = user.get_scopes()
         base_scopes = self.get_base_scopes()
-        base_scopes = expand_scopes_with_action(base_scopes, action)
 
-        return any_scope_matches(base_scopes, user_scopes)
+        return scopes_grant_permissions(base_scopes, user_scopes)
 
