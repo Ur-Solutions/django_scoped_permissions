@@ -1,6 +1,5 @@
 import factory
-
-from django_scoped_permissions.tests.models import Pet, User
+from users.models import User
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -10,13 +9,4 @@ class UserFactory(factory.DjangoModelFactory):
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     username = factory.Sequence(lambda n: "username%d" % n)
-    email = factory.Faker("email")
-
-
-class PetFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Pet
-
-    user = factory.SubFactory(UserFactory)
-    name = "Pet"
-    age = 13
+    email = factory.Sequence(lambda n: "%d@urtesting.sexy" % n)
