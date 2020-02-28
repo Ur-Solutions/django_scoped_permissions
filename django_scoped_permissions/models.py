@@ -91,5 +91,5 @@ class ScopedModelMixin(models.Model):
         user_scopes = user.get_scopes()
         base_scopes = self.get_base_scopes()
 
-        return scopes_grant_permissions(base_scopes, user_scopes)
+        return scopes_grant_permissions(base_scopes, user_scopes, action)
 
