@@ -2,12 +2,19 @@ from addict import Dict
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 
-from django_scoped_permissions.tests.factories import UserFactory
 
-from django_scoped_permissions.decorators import gql_has_all_scoped_permissions, gql_has_scoped_permissions
+from django_scoped_permissions.tests.factories import (
+    CompanyFactory,
+    UserFactory,
+    PetFactory,
+    BuildingFactory,
+)
+from django_scoped_permissions.decorators import (
+    gql_has_all_scoped_permissions,
+    gql_has_scoped_permissions,
+)
 from django_scoped_permissions.models import ScopedPermission
 from django_scoped_permissions.util import scopes_grant_permissions
-from django_scoped_permissions.tests.factories import PetFactory
 
 
 class TestScopesGrantPermission(TestCase):
@@ -69,9 +76,7 @@ class TestHasScopedPermissionsMixin(TestCase):
         user = UserFactory.create()
 
         # Users automatically get the user:1 scope
-        self.assertListEqual(
-            user.get_scopes(), ["user:1"]
-        )
+        self.assertListEqual(user.get_scopes(), ["user:1"])
 
     def test_get_scopes__simple_scopes__returns_array(self):
         user = UserFactory.create()
@@ -118,10 +123,14 @@ class TestHasScopedPermissionsMixin(TestCase):
     def test_get_scopes__exact_and_negation_scopes__appends_equal_and_minus_sign(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope", exclude=True, exact=True)
+            ScopedPermission.objects.create(
+                scope="simple:scope", exclude=True, exact=True
+            )
         )
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope:deep", exclude=True, exact=True)
+            ScopedPermission.objects.create(
+                scope="simple:scope:deep", exclude=True, exact=True
+            )
         )
 
         # Users automatically get the user:1 scope
@@ -129,17 +138,24 @@ class TestHasScopedPermissionsMixin(TestCase):
             user.get_scopes(), ["-=simple:scope", "-=simple:scope:deep", "user:1"]
         )
 
+
 class TestScopedModelMixin(TestCase):
-    def test_has_permission__user_has_exclude_on_specific_top_level_scope__does_not_cascade(self):
+    def test_has_permission__user_has_exclude_on_specific_top_level_scope__does_not_cascade(
+        self,
+    ):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="user:1:update", exclude=True, exact=True)
+            ScopedPermission.objects.create(
+                scope="user:1:update", exclude=True, exact=True
+            )
         )
 
         pet = PetFactory.create(user=user)
         self.assertTrue(pet.has_permission(user, "update"))
 
-    def test_has_permission__user_has_exclude_on_specific_top_level_scope_without_action__does_not_cascade(self):
+    def test_has_permission__user_has_exclude_on_specific_top_level_scope_without_action__does_not_cascade(
+        self,
+    ):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(scope="user:1", exclude=True, exact=True)
@@ -148,9 +164,22 @@ class TestScopedModelMixin(TestCase):
         pet = PetFactory.create(user=user)
         self.assertTrue(pet.has_permission(user))
 
+    def test_has_permission__user_has_exact_ancestor__returns_true(self):
+        company = CompanyFactory.create()
+        user = UserFactory.create()
+        user.scoped_permissions.add(
+            ScopedPermission.objects.create(
+                scope="=building:read", exclude=False, exact=True
+            )
+        )
+
+        company.users.add(user)
+        building = BuildingFactory.create(company=company)
+
+        self.assertTrue(building.has_permission(user, "read"))
+
 
 class TestGqlHasScopedPermissions(TestCase):
-
     def test__user_has_permission__succeeds(self):
         @gql_has_scoped_permissions("simple:scope")
         def wrapper_method(cls, info, *args, **kwargs):
@@ -165,7 +194,6 @@ class TestGqlHasScopedPermissions(TestCase):
 
         result = wrapper_method(None, info)
         self.assertTrue(result)
-
 
     def test__user_does_not_have_permission__fails(self):
         @gql_has_scoped_permissions("simple:scope")
@@ -185,7 +213,9 @@ class TestGqlHasScopedPermissions(TestCase):
 
 class TestGqlHasAllScopedPermissions(TestCase):
     def test__user_has_permission__succeeds(self):
-        @gql_has_all_scoped_permissions("simple:scope", "simple:scope:nested", "other:scope")
+        @gql_has_all_scoped_permissions(
+            "simple:scope", "simple:scope:nested", "other:scope"
+        )
         def wrapper_method(cls, info, *args, **kwargs):
             return True
 
@@ -193,18 +223,17 @@ class TestGqlHasAllScopedPermissions(TestCase):
         user.scoped_permissions.add(
             ScopedPermission.objects.create(scope="simple:scope")
         )
-        user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="other")
-        )
+        user.scoped_permissions.add(ScopedPermission.objects.create(scope="other"))
 
         info = Dict(context=Dict(user=user))
 
         result = wrapper_method(None, info)
         self.assertTrue(result)
 
-
     def test__user_does_not_have_permission__fails(self):
-        @gql_has_all_scoped_permissions("simple:scope", "simple:scope:nested", "other:scope")
+        @gql_has_all_scoped_permissions(
+            "simple:scope", "simple:scope:nested", "other:scope"
+        )
         def wrapper_method(cls, info, *args, **kwargs):
             return True
 
