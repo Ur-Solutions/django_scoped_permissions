@@ -61,3 +61,12 @@ messages:
 .PHONY: compile-messages
 compile-messages:
 	poetry run python manage.py compilemessages
+
+.PHONY: build
+build:
+	poetry run python setup.py sdist bdist_wheel
+
+.PHONY: release
+release:
+	twine upload dist/*
+
