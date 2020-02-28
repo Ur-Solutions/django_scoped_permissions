@@ -87,7 +87,7 @@ def expand_scopes_with_action(scopes: [str], action: str):
     if not action:
         return scopes
 
-    return [create_scope(*scope, action) for scope in scopes]
+    return [create_scope(scope, action) for scope in scopes]
 
 
 def expand_scopes_with_action_recursively(scopes: [str], action: str):

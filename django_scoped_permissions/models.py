@@ -50,7 +50,6 @@ class HasScopedPermissionsMixin(models.Model):
 
         return specific_scopes
 
-
     def has_scoped_permissions(self, *required_scopes):
         return self.has_any_scoped_permissions(*required_scopes)
 
