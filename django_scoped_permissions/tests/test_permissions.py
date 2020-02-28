@@ -169,11 +169,11 @@ class TestScopedModelMixin(TestCase):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(
-                scope="=building:read", exclude=False, exact=True
+                scope="building:read", exclude=False, exact=True
             )
         )
-
         company.users.add(user)
+
         building = BuildingFactory.create(company=company)
 
         self.assertTrue(building.has_permission(user, "read"))
