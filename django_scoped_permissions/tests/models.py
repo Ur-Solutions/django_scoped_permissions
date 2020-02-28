@@ -54,7 +54,6 @@ class Company(models.Model):
         return self.name
 
 
-
 class UserType(HasScopedPermissionsMixin, ScopedModelMixin, models.Model):
     class Meta:
         pass
@@ -85,14 +84,11 @@ class UserType(HasScopedPermissionsMixin, ScopedModelMixin, models.Model):
         return f"{self.name} ({self.company.name})"
 
 
-
 class Pet(ScopedModelMixin, models.Model):
     class Meta:
         pass
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="pets"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="pets")
 
     name = models.CharField(max_length=128)
     age = models.PositiveIntegerField()
@@ -102,6 +98,34 @@ class Pet(ScopedModelMixin, models.Model):
             create_scope("pet", self.id),
             create_scope("user", self.user.id, "pet", self.id),
         ]
+
+    def __str__(self):
+        return self.name
+
+
+class Building(ScopedModelMixin, models.Model):
+    class Meta:
+        pass
+
+    name = models.CharField(max_length=128)
+
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    company = models.ForeignKey(
+        Company, related_name="buildings", on_delete=models.CASCADE
+    )
+    users = models.ManyToManyField(User, related_name="buildings")
+
+    def get_base_scopes(self):
+        scopes = [
+            create_scope(Company, self.company.id, self, self.id),
+        ]
+        if self.created_by is not None:
+            scopes.append(create_scope(User, self.created_by.id, self, self.id))
+
+        return scopes
 
     def __str__(self):
         return self.name
