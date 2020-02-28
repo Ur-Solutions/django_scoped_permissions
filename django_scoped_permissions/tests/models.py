@@ -36,7 +36,7 @@ class User(HasScopedPermissionsMixin, AbstractUser):
         return "User %s" % (self.username,)
 
 
-class Company(models.Model):
+class Company(ScopedModelMixin, models.Model):
     class Meta:
         pass
 
@@ -49,6 +49,9 @@ class Company(models.Model):
     users = models.ManyToManyField(User, related_name="companies")
 
     email = models.CharField(max_length=256, null=True, blank=True)
+
+    def get_base_scopes(self):
+        return [create_scope(self, self.id)]
 
     def __str__(self):
         return self.name

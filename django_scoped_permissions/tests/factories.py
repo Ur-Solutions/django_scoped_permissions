@@ -1,7 +1,7 @@
 import factory
 from factory.fuzzy import FuzzyInteger
 from django.db import models
-from django_scoped_permissions.models import Company, User, Pet, Building
+from django_scoped_permissions.tests.models import Company, User, Pet, Building
 from django_scoped_permissions.util import create_scope
 
 
