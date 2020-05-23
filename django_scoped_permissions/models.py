@@ -1,10 +1,11 @@
+from functools import cached_property
 from typing import Optional
 
 from django.db import models
 from django.db.models import Value, F, Case, When
 from django.db.models.functions import Concat
 
-from django_scoped_permissions.util import any_scope_matches, scopes_grant_permissions
+from django_scoped_permissions.core import any_scope_matches, scopes_grant_permissions
 
 
 class ScopedPermission(models.Model):
@@ -36,7 +37,8 @@ class HasScopedPermissionsMixin(models.Model):
 
     scoped_permissions = models.ManyToManyField(ScopedPermission, blank=True,)
 
-    def get_scopes(self):
+    @cached_property
+    def resolved_scopes(self):
         scopes = self.scoped_permissions
         scopes = scopes.annotate(
             parsed_scope=Concat(
@@ -50,6 +52,8 @@ class HasScopedPermissionsMixin(models.Model):
 
         return specific_scopes
 
+    def get_scopes(self):
+        return self.resolved_scopes
 
     def has_scoped_permissions(self, *required_scopes):
         return self.has_any_scoped_permissions(*required_scopes)
@@ -57,14 +61,13 @@ class HasScopedPermissionsMixin(models.Model):
     def has_any_scoped_permissions(self, *required_scopes):
         scopes = self.get_scopes()
 
-        return any_scope_matches(required_scopes, scopes)
+        return scopes_grant_permissions(required_scopes, scopes)
 
     def has_all_scoped_permissions(self, *required_scopes):
         scopes = self.get_scopes()
 
         for scope in required_scopes:
             if not any_scope_matches([scope], scopes):
-                print(scope, scopes)
                 return False
 
         return True
@@ -74,17 +77,12 @@ class HasScopedPermissionsMixin(models.Model):
         return f"-{model_name}:{action}" not in scopes
 
 
-class ScopedModelMixin(models.Model):
-    """Mixin for a model with scoped permission."""
-
-    class Meta:
-        abstract = True
-
+class ScopedModelMixin:
     def get_base_scopes(self):
         return []
 
     def has_permission(
-        self, user: HasScopedPermissionsMixin, action: Optional[str] = None
+            self, user: HasScopedPermissionsMixin, action: Optional[str] = None
     ):
         if getattr(user, "is_superuser", False):
             return True
@@ -94,3 +92,7 @@ class ScopedModelMixin(models.Model):
 
         return scopes_grant_permissions(base_scopes, user_scopes)
 
+
+class ScopedModel(models.Model, ScopedModelMixin):
+    class Meta:
+        abstract = True

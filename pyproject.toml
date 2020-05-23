@@ -9,9 +9,10 @@ license = "MIT"
 python = "^3.6"
 django = "^3.0.3"
 graphene-django = "^2.8.0"
-graphene-django-cud = "^0.3.0"
+graphene-django-cud = "0.6.2"
 pyjwt = "^1.7.1"
 factory_boy = "^2.12.0"
+pydash = "^4.7.6"
 
 [tool.poetry.dev-dependencies]
 addict = "^2.2.1"

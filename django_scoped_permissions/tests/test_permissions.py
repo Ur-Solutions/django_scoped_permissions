@@ -2,11 +2,11 @@ from addict import Dict
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 
+from django_scoped_permissions.core import scopes_grant_permissions
 from django_scoped_permissions.tests.factories import UserFactory
 
 from django_scoped_permissions.decorators import gql_has_all_scoped_permissions, gql_has_scoped_permissions
 from django_scoped_permissions.models import ScopedPermission
-from django_scoped_permissions.util import scopes_grant_permissions
 from django_scoped_permissions.tests.factories import PetFactory
 
 

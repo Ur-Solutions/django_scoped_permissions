@@ -4,15 +4,13 @@ from django.db.models.base import ModelBase
 
 
 def scopes_grant_permissions(
-    required_base_scopes: [str], granting_scopes: [str], action: Optional[str] = None
+        required_base_scopes: [str], granting_scopes: [str], action: Optional[str] = None
 ):
     """
     scopes_grants_permission takes as arguments a number of required base scopes,
     and then a set of granting scopes, e.g. scopes a User has.
-
     The method then checks whether or not the granting scopes provides access to the
     required base scopes.
-
     This depends on multiple facts. But primarily, we check the following:
         1. If the user has an exact negation which matches one of the base_scopes,
            or the base_scopes with the action expanded, we return False.
@@ -21,7 +19,6 @@ def scopes_grant_permissions(
         3. If the user has a negation that matches any of the scopes (expanded or not), we return False.
         4. If the user has a scope that matches any of the scopes, we return True.
         5. Return False
-
     """
     exclude_exact, include_exact, exclude, include = partition_scopes(granting_scopes)
 
@@ -54,7 +51,6 @@ def scopes_grant_permissions(
 def any_scope_matches(required_scopes: [str], scopes: [str]):
     """
     Check if any of the given scopes matches any of the required_scopes.
-
     :param required_scopes:
     :param scopes:
     :return:
@@ -71,7 +67,6 @@ def any_scope_matches(required_scopes: [str], scopes: [str]):
 def expand_scopes_with_action(scopes: [str], action: str):
     """
     Appends an action to the scopes given.
-
     Example:
         scopes: ["user:1", "company:1:user:1"]
         action: edit
@@ -79,7 +74,6 @@ def expand_scopes_with_action(scopes: [str], action: str):
             "user:1:edit",
             "company:1:user:1:edit",
         ]
-
     :param scopes:
     :param action:
     :return:
@@ -126,10 +120,8 @@ def expand_scopes_with_action_recursively(scopes: [str], action: str):
 def scope_matches(required_scope: str, scope: str):
     """
     Checks if two scopes match. They match if and only if the following is true:
-
         - All parts of required_scope are contained in scope, in the same order as supplied in required_scope.
         - If the scope starts with =, it must match the required scope exactly.
-
     Examples:
         required    = users:1:edit
         scope       = users:1
@@ -143,7 +135,6 @@ def scope_matches(required_scope: str, scope: str):
         required    = company:1:timesheets:create
         scope       = company:1
         OK
-
     :param required_scope:
     :param scope:
     :return:
@@ -197,26 +188,6 @@ def partition_scopes(scopes: [str]):
             include.append(scope)
 
     return [exclude_exact, include_exact, exclude, include]
-
-
-def read_scoped(qs, user, company, filter_fields={}):
-    if user.is_superuser:
-        return qs
-
-    model_name = qs.model._meta.model_name
-    user_scopes = user.get_scopes()
-
-    negated_read_scope = f"-{model_name}:read"
-    if negated_read_scope in user_scopes:
-        return qs.none()
-
-    read_scopes = [f"{model_name}:read", f"company:{company.id}", "read"]
-    scope_match = any_scope_matches(read_scopes, user_scopes)
-    if scope_match:
-        return qs
-
-    return qs.filter(**filter_fields)
-
 
 def strip_negation(scope: str) -> str:
     return scope[1:] if scope.startswith("-") else scope

@@ -1,8 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from django_scoped_permissions.core import create_scope
 from django_scoped_permissions.models import HasScopedPermissionsMixin, ScopedModelMixin
-from django_scoped_permissions.util import create_scope
 
 
 class User(HasScopedPermissionsMixin, AbstractUser):
@@ -17,13 +17,13 @@ class User(HasScopedPermissionsMixin, AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
 
     def get_scopes(self):
-        base_scopes = super().get_scopes()
+        scopes = self.resolved_scopes
 
         for user_type in self.user_types.all():
-            base_scopes.extend(user_type.get_scopes())
+            scopes.extend(user_type.get_scopes())
 
-        base_scopes.append(f"user:{self.id}")
-        return base_scopes
+        scopes.append(f"user:{self.id}")
+        return scopes
 
     def get_name_or_username(self):
         return self.get_full_name() or self.username
@@ -52,7 +52,6 @@ class Company(models.Model):
 
     def __str__(self):
         return self.name
-
 
 
 class UserType(HasScopedPermissionsMixin, ScopedModelMixin, models.Model):
@@ -85,14 +84,11 @@ class UserType(HasScopedPermissionsMixin, ScopedModelMixin, models.Model):
         return f"{self.name} ({self.company.name})"
 
 
-
 class Pet(ScopedModelMixin, models.Model):
     class Meta:
         pass
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="pets"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="pets")
 
     name = models.CharField(max_length=128)
     age = models.PositiveIntegerField()
