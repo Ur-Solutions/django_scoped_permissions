@@ -6,7 +6,7 @@ authors = ["Magnus Buvarp <magnus.buvarp@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.6"
 django = "^3.0.3"
 graphene-django = "^2.8.0"
 graphene-django-cud = "^0.3.0"
