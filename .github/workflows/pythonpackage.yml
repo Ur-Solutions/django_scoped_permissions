@@ -10,9 +10,9 @@ on:
     branches: [ develop, master ]
 
 jobs:
-  build:
+  test:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
@@ -42,3 +42,20 @@ jobs:
     - name: Test with coverage
       run: |
         make test-cov
+  release:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Install Poetry
+      run: |
+        pip install poetry==1.0.0
+        poetry config virtualenvs.create false
+        poetry install --no-interaction
+    - name: Build package
+      run: make build
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
