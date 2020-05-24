@@ -1,6 +1,6 @@
 import itertools
 import re
-from typing import TypedDict, Mapping, Union, Iterable, List
+from typing import Mapping, Iterable, List
 
 from graphql import GraphQLError
 from pydash import get
