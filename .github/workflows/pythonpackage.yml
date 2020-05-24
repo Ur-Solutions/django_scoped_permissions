@@ -23,22 +23,21 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      run: |
+        pip install poetry==1.0.0
+        poetry config virtualenvs.in-project true
     - name: Cache pip
       uses: actions/cache@v1
       with:
-        # This path is specific to Ubuntu
-        path: ~/.cache/pip
-        # Look to see if there is a cache hit for the corresponding requirements file
+        path: .venv
         key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('poetry.lock') }}
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version}}-pip-
           ${{ runner.os }}-${{ matrix.python-version}}-
           ${{ runner.os }}-
-    - name: Install Poetry
-      run: |
-        pip install poetry==1.0.0
-        poetry config virtualenvs.create false
-        poetry install --no-interaction
+    - name: Install dependencies
+      run: poetry install --no-interaction
     - name: Test with coverage
       run: |
         make test-cov
