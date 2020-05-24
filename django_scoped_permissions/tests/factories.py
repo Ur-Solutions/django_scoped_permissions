@@ -10,7 +10,7 @@ class UserFactory(factory.DjangoModelFactory):
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     username = factory.Sequence(lambda n: "username%d" % n)
-    email = factory.Sequence(lambda n: "%d@urtesting.sexy" % n)
+    email = factory.Sequence(lambda n: "user-%d@ursolutions.no" % n)
 
 
 class PetFactory(factory.DjangoModelFactory):

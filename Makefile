@@ -30,26 +30,6 @@ shell:
 superuser:
 	poetry run python manage.py createsuperuser
 
-.PHONY: worker
-worker:
-	poetry run celery -A mementoportal_backend worker -l INFO
-
-.PHONY: beat
-beat:
-	poetry run celery -A mementoportal_backend beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
-
-.PHONY: build
-build:
-	poetry run python _build/build.py
-
-.PHONY: push
-push:
-	poetry run python _build/push.py
-
-.PHONY: deploy
-deploy:
-	poetry run python _build/deploy.py
-
 .PHONY: cd
 cd:
 	make build && make push && make deploy
