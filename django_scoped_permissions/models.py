@@ -1,9 +1,9 @@
-from functools import cached_property
 from typing import Optional
 
 from django.db import models
 from django.db.models import Value, F, Case, When
 from django.db.models.functions import Concat
+from django.utils.functional import cached_property
 
 from django_scoped_permissions.core import any_scope_matches, scopes_grant_permissions
 
