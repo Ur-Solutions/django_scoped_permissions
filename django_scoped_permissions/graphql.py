@@ -99,12 +99,12 @@ class ScopedDjangoNode(DjangoObjectType):
         if cls._meta.node_permissions:
             if not user.has_scoped_permissions(*cls._meta.node_permissions):
                 raise GraphQLError("You are not permitted to view this.")
-
-        # Try to get object and see if we can get the required scopes from it
-        obj = cls._meta.model.objects.get(pk=id)
-        if hasattr(obj, "get_base_scopes"):
-            if not user.has_scoped_permissions(*obj.get_base_scopes()):
-                raise GraphQLError("You are not permitted to view this.")
+        else:
+            # Try to get object and see if we can get the required scopes from it
+            obj = cls._meta.model.objects.get(pk=id)
+            if hasattr(obj, "get_base_scopes"):
+                if not user.has_scoped_permissions(*obj.get_base_scopes()):
+                    raise GraphQLError("You are not permitted to view this.")
 
         return super().get_node(info, id)
 
