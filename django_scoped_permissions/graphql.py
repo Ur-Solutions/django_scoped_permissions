@@ -3,16 +3,22 @@ from typing import Tuple, Mapping, Union, Iterable
 from graphene import Node
 from graphene_django import DjangoObjectType
 from graphene_django.types import DjangoObjectTypeOptions
-from graphene_django_cud.mutations import DjangoPatchMutation
-from graphene_django_cud.mutations.create import (
-    DjangoCreateMutation,
-)
+from graphene_django_cud.mutations import DjangoPatchMutation, DjangoDeleteMutation, DjangoBatchCreateMutation, \
+    DjangoBatchDeleteMutation, DjangoFilterDeleteMutation
+from graphene_django_cud.mutations.create import DjangoCreateMutation
+from graphene_django_cud.mutations.delete import DjangoDeleteMutationOptions
 from graphene_django_cud.mutations.patch import DjangoPatchMutationOptions
-from graphene_django_cud.mutations.update import DjangoUpdateMutationOptions, DjangoUpdateMutation
+from graphene_django_cud.mutations.update import (
+    DjangoUpdateMutationOptions,
+    DjangoUpdateMutation,
+)
 from graphql import GraphQLError
 
-from django_scoped_permissions.graphql_util import expand_scopes_from_context, create_resolver_from_method, \
-    create_resolver_from_scopes
+from django_scoped_permissions.graphql_util import (
+    expand_scopes_from_context,
+    create_resolver_from_method,
+    create_resolver_from_scopes,
+)
 from django_scoped_permissions.models import HasScopedPermissionsMixin, ScopedModelMixin
 
 
@@ -28,12 +34,12 @@ class ScopedDjangoNode(DjangoObjectType):
 
     @classmethod
     def __init_subclass_with_meta__(
-            cls,
-            node_permissions=None,
-            field_permissions=None,
-            allow_anonymous=False,
-            _meta=None,
-            **options,
+        cls,
+        node_permissions=None,
+        field_permissions=None,
+        allow_anonymous=False,
+        _meta=None,
+        **options,
     ):
         if not _meta:
             _meta = ScopedDjangoNodeOptions(cls)
@@ -124,6 +130,27 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
         if not info.context.user.has_scoped_permissions(expanded_permissions):
             raise GraphQLError("You are not permitted to view this.")
 
+class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def check_permissions(cls, root, info, input) -> None:
+        permissions = cls.get_permissions(root, info, input)
+
+        if len(permissions) == 0:
+            return
+
+        context = {"context": info.context, "input": input}
+
+        expanded_permissions = expand_scopes_from_context(permissions, context)
+
+        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+            raise GraphQLError("You are not permitted to view this.")
+
+        if not info.context.user.has_scoped_permissions(expanded_permissions):
+            raise GraphQLError("You are not permitted to view this.")
+
 
 class ScopedDjangoPatchMutationOptions(DjangoPatchMutationOptions):
     permission_action = "update"  # type: str
@@ -174,7 +201,7 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
 
     @classmethod
     def __init_subclass_with_meta__(
-            cls, _meta=None, permission_action="update", **options
+        cls, _meta=None, permission_action="update", **options
     ):
         if _meta is None:
             _meta = ScopedDjangoPatchMutationOptions(cls)
@@ -232,7 +259,7 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
 
     @classmethod
     def __init_subclass_with_meta__(
-            cls, _meta=None, permission_action="update", **options
+        cls, _meta=None, permission_action="update", **options
     ):
         if _meta is None:
             _meta = ScopedDjangoUpdateMutationOptions(cls)
@@ -240,3 +267,105 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
         _meta.permission_action = permission_action
 
         return super().__init_subclass_with_meta__(_meta=_meta, **options)
+
+
+class ScopedDjangoDeleteMutationOptions(DjangoDeleteMutationOptions):
+    permission_action = "delete"  # type: str
+
+
+class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def get_permissions(cls, root, info, id, obj) -> Iterable[str]:
+        super_permissions = super().get_permissions(root, info, input, id, obj)
+
+        if len(super_permissions) > 0:
+            return super_permissions
+
+        # If we don't have explicit permissions we use some defaults here.
+        if cls._meta.permission_action == "":
+            return ["{base_scopes}"]
+        else:
+            return [
+                # Double curly brackets escapes them
+                f"{{base_scopes}}:{cls._meta.permission_action}"
+            ]
+
+    @classmethod
+    def check_permissions(cls, root, info, id, obj) -> None:
+        permissions = cls.get_permissions(root, info, input)
+
+        context = {}
+
+        if isinstance(obj, ScopedModelMixin):
+            context["base_scopes"] = obj.get_base_scopes()
+
+        context["context"] = info.context
+        context["input"] = input
+        context["id"] = id
+        context["obj"] = obj
+
+        expanded_permissions = expand_scopes_from_context(permissions, context)
+
+        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+            raise GraphQLError("You are not permitted to view this.")
+
+        if not info.context.user.has_scoped_permissions(expanded_permissions):
+            raise GraphQLError("You are not permitted to view this.")
+
+    @classmethod
+    def __init_subclass_with_meta__(
+        cls, _meta=None, permission_action="delete", **options
+    ):
+        if _meta is None:
+            _meta = ScopedDjangoUpdateMutationOptions(cls)
+
+        _meta.permission_action = permission_action
+
+        return super().__init_subclass_with_meta__(_meta=_meta, **options)
+
+
+class ScopedDjangoBatchDeleteMutation(DjangoBatchDeleteMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def check_permissions(cls, root, info, input) -> None:
+        permissions = cls.get_permissions(root, info, input)
+
+        if len(permissions) == 0:
+            return
+
+        context = {"context": info.context, "input": input}
+
+        expanded_permissions = expand_scopes_from_context(permissions, context)
+
+        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+            raise GraphQLError("You are not permitted to view this.")
+
+        if not info.context.user.has_scoped_permissions(expanded_permissions):
+            raise GraphQLError("You are not permitted to view this.")
+
+
+class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def check_permissions(cls, root, info, input) -> None:
+        permissions = cls.get_permissions(root, info, input)
+
+        if len(permissions) == 0:
+            return
+
+        context = {"context": info.context, "input": input}
+
+        expanded_permissions = expand_scopes_from_context(permissions, context)
+
+        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+            raise GraphQLError("You are not permitted to view this.")
+
+        if not info.context.user.has_scoped_permissions(expanded_permissions):
+            raise GraphQLError("You are not permitted to view this.")
