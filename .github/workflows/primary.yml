@@ -61,4 +61,4 @@ jobs:
     - name: Build package
       run: make build
     - name: Publish package
-      run: twine upload
+      run: make release
