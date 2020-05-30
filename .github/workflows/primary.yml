@@ -1,11 +1,9 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Test and push
 
 on:
   push:
     branches: [ develop, master ]
+    tags: [ v* ]
   pull_request:
     branches: [ develop, master ]
 
@@ -43,7 +41,7 @@ jobs:
         make test-cov
   release:
     needs: test
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     runs-on: ubuntu-18.04
     steps:
     - name: Install Poetry
