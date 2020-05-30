@@ -230,7 +230,7 @@ description = "Create, update and delete mutations for graphene-django"
 name = "graphene-django-cud"
 optional = false
 python-versions = "*"
-version = "0.6.2"
+version = "0.6.4"
 
 [package.dependencies]
 graphene-django = ">=2.0"
@@ -765,7 +765,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "2e41b286126eb85f09ab80c38c89beab4664318f2bc6c62cb1acf8597cfc820c"
+content-hash = "73c925c8eb7db7e8899ea3243a7e4c5d78687742582046c955b68308dedd6cd3"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -917,8 +917,8 @@ graphene-django = [
     {file = "graphene_django-2.10.1-py2.py3-none-any.whl", hash = "sha256:1df67ac665282b45be816516e770d67cf16134331299293fd9a49cd49de05dd4"},
 ]
 graphene-django-cud = [
-    {file = "graphene-django-cud-0.6.2.tar.gz", hash = "sha256:6d2906e820b35748ad6cfe29cea0c77e33597815bc7b2e6aac38b40522bff541"},
-    {file = "graphene_django_cud-0.6.2-py3-none-any.whl", hash = "sha256:f42d3defbf7a4b1c755eb2f04fd9ce2c6bd9272f6e7b868ec6df2c92f42653ca"},
+    {file = "graphene-django-cud-0.6.4.tar.gz", hash = "sha256:acc318666246a2e7b76dfefaddd343da30f64debabf825099417040baa27046f"},
+    {file = "graphene_django_cud-0.6.4-py3-none-any.whl", hash = "sha256:36a39a4c9646906e63fbdd8b36c7de37b50d4f6ca447977d3043a7381a769661"},
 ]
 graphene-file-upload = [
     {file = "graphene_file_upload-1.2.2-py3-none-any.whl", hash = "sha256:034ff72d2834b7aebd06fda412fa88a10aba34bac604317f7552457e47040654"},
