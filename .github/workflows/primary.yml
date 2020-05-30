@@ -46,6 +46,7 @@ jobs:
     steps:
     - name: Install Poetry
       run: |
+        pip install wheel
         pip install poetry==1.0.0
         poetry config virtualenvs.create false
         poetry install --no-interaction
