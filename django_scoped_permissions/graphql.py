@@ -191,7 +191,6 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
         context["obj"] = obj
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
-        print(expanded_permissions)
 
         if not isinstance(info.context.user, HasScopedPermissionsMixin):
             raise GraphQLError("You are not permitted to view this.")
