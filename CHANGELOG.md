@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.0.4
+* Fix some issues with the graphene-django-cud classes
+
 ## Version 0.0.3
 * Register ScopedPermission to admin site
 
