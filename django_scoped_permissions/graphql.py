@@ -236,7 +236,7 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input, id, obj) -> None:
-        permissions = cls.get_permissions(root, info, input)
+        permissions = cls.get_permissions(root, info, input, id, obj)
 
         context = {}
 
@@ -278,7 +278,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
 
     @classmethod
     def get_permissions(cls, root, info, id, obj) -> Iterable[str]:
-        super_permissions = super().get_permissions(root, info, input, id, obj)
+        super_permissions = super().get_permissions(root, info, id, obj)
 
         if len(super_permissions) > 0:
             return super_permissions
@@ -294,7 +294,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, id, obj) -> None:
-        permissions = cls.get_permissions(root, info, input)
+        permissions = cls.get_permissions(root, info,  id, obj)
 
         context = {}
 
