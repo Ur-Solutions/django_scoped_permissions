@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.0.5
+* Fix an issue with permissions not being spread properly
+
 ## Version 0.0.4
 * Fix some issues with the graphene-django-cud classes
 
