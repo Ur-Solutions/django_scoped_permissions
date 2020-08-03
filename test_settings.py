@@ -15,6 +15,7 @@ INSTALLED_APPS = [
 
     "django_scoped_permissions",
     "django_scoped_permissions.tests",
+    "graphene_django",
 ]
 
 MIDDLEWARE = [

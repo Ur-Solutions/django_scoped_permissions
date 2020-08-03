@@ -1,15 +1,16 @@
 import graphene
 from graphene import Node
 from graphene_django import DjangoObjectType, DjangoConnectionField
-from permissions.graphql import (
+
+from build.lib.django_scoped_permissions.util import read_scoped
+from django_scoped_permissions.core import create_scope
+from django_scoped_permissions.graphql import (
     ScopedDjangoCreateMutation,
     ScopedDjangoPatchMutation,
     ScopedDjangoUpdateMutation,
     ScopedDjangoDeleteMutation,
 )
-
-from django_scoped_permissions.util import read_scoped
-from django_scoped_permissions.tests.models import Pet
+from django_scoped_permissions.tests.models import Pet, User
 
 
 class PetNode(DjangoObjectType):
@@ -22,7 +23,15 @@ class PetNode(DjangoObjectType):
         return Pet.objects.get(pk=id)
 
 
+class UserNode(DjangoObjectType):
+    class Meta:
+        model = User
+        interfaces = (Node,)
+
 class PetQuery(graphene.ObjectType):
+
+    user = Node.Field(UserNode)
+
     pet = Node.Field(PetNode)
     all_pets = DjangoConnectionField(PetNode)
 
@@ -35,6 +44,11 @@ class PetQuery(graphene.ObjectType):
 class CreatePetMutation(ScopedDjangoCreateMutation):
     class Meta:
         model = Pet
+
+        permissions = [
+            create_scope(Pet, "create"),
+            create_scope(User, "edit"),
+        ]
 
 
 class PatchPetMutation(ScopedDjangoPatchMutation):
@@ -52,9 +66,25 @@ class DeletePetMutation(ScopedDjangoDeleteMutation):
         model = Pet
 
 
+class CreateUserMutation(ScopedDjangoCreateMutation):
+    class Meta:
+        model = User
 
 class PetMutations(graphene.ObjectType):
     create_pet = CreatePetMutation.Field()
     update_pet = UpdatePetMutation.Field()
     patch_pet = PatchPetMutation.Field()
     delete_pet = DeletePetMutation.Field()
+
+    create_user = CreateUserMutation.Field()
+
+
+class Query(PetQuery):
+    pass
+
+
+class Mutation(PetMutations):
+    pass
+
+
+schema = graphene.Schema(query=Query, mutation=Mutation,)
