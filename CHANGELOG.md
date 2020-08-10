@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.0.6
+* (Graphql): Fix an issue with bad permission checks
+
 ## Version 0.0.5
 * Fix an issue with permissions not being spread properly
 
