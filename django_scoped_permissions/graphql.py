@@ -115,9 +115,9 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input)
+        permissions = cls.get_permissions(root, info, input) or []
 
-        if len(permissions) == 0:
+        if not hasattr(permissions, '__len__') or len(permissions) == 0:
             return
 
         context = {"context": info.context, "input": input}
@@ -136,9 +136,9 @@ class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input)
+        permissions = cls.get_permissions(root, info, input) or []
 
-        if len(permissions) == 0:
+        if not hasattr(permissions, '__len__') or len(permissions) == 0:
             return
 
         context = {"context": info.context, "input": input}
@@ -162,9 +162,9 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
 
     @classmethod
     def get_permissions(cls, root, info, input, id, obj) -> Iterable[str]:
-        super_permissions = super().get_permissions(root, info, input, id, obj)
+        super_permissions = super().get_permissions(root, info, input, id, obj) or []
 
-        if super_permissions is not None and len(super_permissions) > 0:
+        if hasattr(super_permissions, '__len__') and len(super_permissions) > 0:
             return super_permissions
 
         # If we don't have explicit permissions we use some defaults here.
@@ -220,9 +220,9 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
 
     @classmethod
     def get_permissions(cls, root, info, input, id, obj) -> Iterable[str]:
-        super_permissions = super().get_permissions(root, info, input, id, obj)
+        super_permissions = super().get_permissions(root, info, input, id, obj) or []
 
-        if len(super_permissions) > 0:
+        if hasattr(super_permissions, '__len__') and len(super_permissions) > 0:
             return super_permissions
 
         # If we don't have explicit permissions we use some defaults here.
@@ -236,7 +236,7 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input, id, obj) -> None:
-        permissions = cls.get_permissions(root, info, input, id, obj)
+        permissions = cls.get_permissions(root, info, input, id, obj) or []
 
         context = {}
 
@@ -280,7 +280,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
     def get_permissions(cls, root, info, id, obj) -> Iterable[str]:
         super_permissions = super().get_permissions(root, info, id, obj)
 
-        if len(super_permissions) > 0:
+        if hasattr(super_permissions, '__len__') and len(super_permissions) > 0:
             return super_permissions
 
         # If we don't have explicit permissions we use some defaults here.
@@ -294,7 +294,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, id, obj) -> None:
-        permissions = cls.get_permissions(root, info,  id, obj)
+        permissions = cls.get_permissions(root, info,  id, obj) or []
 
         context = {}
 
@@ -332,9 +332,9 @@ class ScopedDjangoBatchDeleteMutation(DjangoBatchDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input)
+        permissions = cls.get_permissions(root, info, input) or []
 
-        if len(permissions) == 0:
+        if not hasattr(permissions, '__len__') or len(permissions) == 0:
             return
 
         context = {"context": info.context, "input": input}
@@ -354,9 +354,9 @@ class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input)
+        permissions = cls.get_permissions(root, info, input) or []
 
-        if len(permissions) == 0:
+        if not hasattr(permissions, '__len__') or len(permissions) == 0:
             return
 
         context = {"context": info.context, "input": input}
