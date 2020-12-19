@@ -278,7 +278,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
 
     @classmethod
     def get_permissions(cls, root, info, id, obj) -> Iterable[str]:
-        super_permissions = super().get_permissions(root, info, id, obj)
+        super_permissions = list(super().get_permissions(root, info, id, obj))
 
         if hasattr(super_permissions, '__len__') and len(super_permissions) > 0:
             return super_permissions
@@ -332,7 +332,7 @@ class ScopedDjangoBatchDeleteMutation(DjangoBatchDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
+        permissions = list(cls.get_permissions(root, info, input)) or []
 
         if not hasattr(permissions, '__len__') or len(permissions) == 0:
             return
@@ -354,7 +354,7 @@ class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
+        permissions = list(cls.get_permissions(root, info, input)) or []
 
         if not hasattr(permissions, '__len__') or len(permissions) == 0:
             return
