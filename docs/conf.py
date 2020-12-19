@@ -16,13 +16,6 @@
 
 
 # -- Project information -----------------------------------------------------
-import sys
-from os.path import dirname, join, abspath
-
-from pygments.lexer import RegexLexer
-from pygments.token import *
-
-from sphinx.highlighting import lexers
 
 project = 'django-scoped-permissions'
 copyright = '2020, Tormod Haugland'
