@@ -20,7 +20,7 @@ migrations:
 
 .PHONY: run
 run:
-	poetry run python manage.py runserver 0.0.0.0:8002
+	poetry run python manage.py runserver 0.0.0.0:8014
 
 .PHONY: shell
 shell:
