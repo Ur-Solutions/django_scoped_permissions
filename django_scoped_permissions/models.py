@@ -31,15 +31,28 @@ class ScopedPermission(models.Model):
         return prefix + self.scope
 
 
+class ScopedPermissionGroup(models.Model):
+    name = models.TextField()
+    scoped_permissions = models.ManyToManyField(
+        ScopedPermission, blank=True, related_name="in_groups"
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class HasScopedPermissionsMixin(models.Model):
     class Meta:
         abstract = True
 
-    scoped_permissions = models.ManyToManyField(ScopedPermission, blank=True,)
+    scoped_permissions = models.ManyToManyField(ScopedPermission, blank=True)
+    scoped_permission_groups = models.ManyToManyField(ScopedPermissionGroup, blank=True)
 
     @cached_property
-    def resolved_scopes(self):
-        scopes = self.scoped_permissions
+    def resolved_group_scopes(self):
+        scopes = ScopedPermission.objects.filter(
+            in_groups__in=self.scoped_permission_groups.all()
+        )
         scopes = scopes.annotate(
             parsed_scope=Concat(
                 Case(When(exclude=True, then=Value("-")), default=Value("")),
@@ -48,9 +61,24 @@ class HasScopedPermissionsMixin(models.Model):
             )
         )
 
-        specific_scopes = list(scopes.values_list("parsed_scope", flat=True))
+        return list(scopes.values_list("parsed_scope", flat=True))
 
-        return specific_scopes
+    @cached_property
+    def resolved_scopes(self):
+        scopes = self.scoped_permissions.all() | ScopedPermission.objects.filter(
+            in_groups__in=self.scoped_permission_groups.all()
+        )
+        scopes = scopes.annotate(
+            parsed_scope=Concat(
+                Case(When(exclude=True, then=Value("-")), default=Value("")),
+                Case(When(exact=True, then=Value("=")), default=Value("")),
+                F("scope"),
+            )
+        )
+
+        resolved_scopes = list(scopes.values_list("parsed_scope", flat=True))
+
+        return resolved_scopes
 
     def get_scopes(self):
         return self.resolved_scopes
