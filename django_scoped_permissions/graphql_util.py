@@ -75,7 +75,7 @@ def create_resolver_from_scopes(field_name: str, scopes: [str]):
 
 def expand_scopes(
     scopes: Iterable[str], expansion_map: Mapping[str, Iterable[str]] = None
-) -> List[str]:
+) -> Iterable[str]:
     if expansion_map is None or len(list(expansion_map.values())) == 0:
         return scopes
 
