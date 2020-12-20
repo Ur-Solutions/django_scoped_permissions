@@ -130,4 +130,12 @@ Another problem we might have, is revoking specific permissions. Say for instanc
 
 We can achieve this with an **exclusion permission**: :code:`-organization:2`. In combination, these two permission yields access to all organizations apart from the organization with id 2.
 
-Note that exclusion permissions always takes precedent over inclusion permissions.
+Note that exclusion permissions always takes precedence over inclusion permissions.
+
+
+Exact exclusion permissions
+-------------------------------
+
+We can combine the above two notions, e.g. `-=organization:2`. This will revoke access to exactly the permission `organization:2`.
+
+Interestingly, this will still grant access to required permissions such as `organization:2:user`.
