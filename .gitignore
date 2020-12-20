@@ -141,3 +141,7 @@ dmypy.json
 
 # sqlite
 *.sqlite
+
+static/
+
+.testmondata
