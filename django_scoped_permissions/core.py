@@ -3,8 +3,40 @@ from django.db.models import Model
 from django.db.models.base import ModelBase
 
 
+def scope_grants_permission(
+    required_scope: str, granting_scope: str, action: Optional[str] = None
+):
+    """
+    scope_grants_permission checks if a single granting scope matches a single required scope.
+
+    This is slightly simpler than the method scopes_grant_permission below, and follows the following rules:
+
+    1. If the granting_scope has an exclusion rule (starts with "-"), we always return false.
+    2. If the scopes are equal, we always returns true.
+    3. If the granting_scope is an exact rule (starts with "="), we expand the required scope non-recursively with the action, and then check for equality.
+    4. Exapnd the required scope recursively with the action and check if the scopes match.
+
+    """
+    # Single negation permissions will never grant access
+    if granting_scope.startswith("-"):
+        return False
+
+    if required_scope == granting_scope:
+        return True
+
+    # The equal case will not have the action applied recursively
+    if granting_scope.startswith("="):
+        expanded_scopes = expand_scopes_with_action([required_scope], action)
+    else:
+        expanded_scopes = expand_scopes_with_action_recursively(
+            [required_scope], action
+        )
+
+    return any_scope_matches(expanded_scopes, [granting_scope])
+
+
 def scopes_grant_permissions(
-        required_base_scopes: [str], granting_scopes: [str], action: Optional[str] = None
+    required_scopes: [str], granting_scopes: [str], action: Optional[str] = None
 ):
     """
     scopes_grants_permission takes as arguments a number of required base scopes,
@@ -22,11 +54,9 @@ def scopes_grant_permissions(
     """
     exclude_exact, include_exact, exclude, include = partition_scopes(granting_scopes)
 
-    required_base_scopes_with_action = expand_scopes_with_action(
-        required_base_scopes, action
-    )
+    required_base_scopes_with_action = expand_scopes_with_action(required_scopes, action)
     required_scopes_with_action = expand_scopes_with_action_recursively(
-        required_base_scopes, action
+        required_scopes, action
     )
 
     # Check case 1
@@ -81,7 +111,7 @@ def expand_scopes_with_action(scopes: [str], action: str):
     if not action:
         return scopes
 
-    return [create_scope(*scope, action) for scope in scopes]
+    return [create_scope(scope, action) for scope in scopes]
 
 
 def expand_scopes_with_action_recursively(scopes: [str], action: str):
@@ -117,7 +147,7 @@ def expand_scopes_with_action_recursively(scopes: [str], action: str):
     return result
 
 
-def scope_matches(required_scope: str, scope: str):
+def scope_matches(required_scope: str, granting_scope: str):
     """
     Checks if two scopes match. They match if and only if the following is true:
         - All parts of required_scope are contained in scope, in the same order as supplied in required_scope.
@@ -136,13 +166,21 @@ def scope_matches(required_scope: str, scope: str):
         scope       = company:1
         OK
     :param required_scope:
-    :param scope:
+    :param granting_scope:
     :return:
     """
-    if scope[0] == "=":
-        return required_scope == scope[1:]
+    if granting_scope[0] == "=":
+        return required_scope == granting_scope[1:]
 
-    return scope in required_scope
+    if granting_scope == required_scope:
+        return True
+
+    if required_scope.startswith(granting_scope):
+        # Ensure that the next character is a colon, i.e. that the granting scope
+        # fully matches some parent scope
+        return required_scope[len(granting_scope)] == ":"
+
+    return False
 
 
 def get_scope_arg_str(arg: Union[str, Model, ModelBase]):
@@ -188,6 +226,7 @@ def partition_scopes(scopes: [str]):
             include.append(scope)
 
     return [exclude_exact, include_exact, exclude, include]
+
 
 def strip_negation(scope: str) -> str:
     return scope[1:] if scope.startswith("-") else scope
