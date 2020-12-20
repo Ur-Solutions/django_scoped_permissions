@@ -1,6 +1,7 @@
 import graphene
 from graphene import Node
 from graphene_django import DjangoObjectType, DjangoConnectionField
+from graphql import GraphQLError
 
 from build.lib.django_scoped_permissions.util import read_scoped
 from django_scoped_permissions.core import create_scope
@@ -27,6 +28,7 @@ class UserNode(DjangoObjectType):
     class Meta:
         model = User
         interfaces = (Node,)
+
 
 class PetQuery(graphene.ObjectType):
 
@@ -70,6 +72,7 @@ class CreateUserMutation(ScopedDjangoCreateMutation):
     class Meta:
         model = User
 
+
 class PetMutations(graphene.ObjectType):
     create_pet = CreatePetMutation.Field()
     update_pet = UpdatePetMutation.Field()
@@ -83,8 +86,23 @@ class Query(PetQuery):
     pass
 
 
-class Mutation(PetMutations):
-    pass
+class CreateUserMutation(ScopedDjangoCreateMutation):
+    class Meta:
+        model = User
+        optional_fields = ("password", "username")
+        required_fields = ("primary_organization",)
+        permissions = [
+            create_scope(User, "create"),
+        ]
+
+    @classmethod
+    def before_save(cls, root, info, input, obj):
+        raise GraphQLError("Epic fail")
+        obj.username = obj.email
+
+
+class Mutation(graphene.ObjectType):
+    create_user = CreateUserMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation,)

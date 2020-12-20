@@ -81,6 +81,12 @@ class HasScopedPermissionsMixin(models.Model):
         return resolved_scopes
 
     def get_scopes(self):
+        """
+        DEPRECATED: Use `get_granting_scopes` instead
+        """
+        return self.resolved_scopes
+
+    def get_granting_scopes(self):
         return self.resolved_scopes
 
     def has_scoped_permissions(self, *required_scopes):
@@ -107,18 +113,24 @@ class HasScopedPermissionsMixin(models.Model):
 
 class ScopedModelMixin:
     def get_base_scopes(self):
+        """
+        DEPRECATED: Use `get_required_scopes`
+        """
+        return self.get_required_scopes()
+
+    def get_required_scopes(self):
         return []
 
     def has_permission(
-            self, user: HasScopedPermissionsMixin, action: Optional[str] = None
+        self, user: HasScopedPermissionsMixin, action: Optional[str] = None
     ):
         if getattr(user, "is_superuser", False):
             return True
 
-        user_scopes = user.get_scopes()
-        base_scopes = self.get_base_scopes()
+        user_scopes = user.get_granting_scopes()
+        base_scopes = self.get_required_scopes()
 
-        return scopes_grant_permissions(base_scopes, user_scopes)
+        return scopes_grant_permissions(base_scopes, user_scopes, action)
 
 
 class ScopedModel(models.Model, ScopedModelMixin):

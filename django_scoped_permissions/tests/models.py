@@ -16,11 +16,11 @@ class User(HasScopedPermissionsMixin, AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def get_scopes(self):
+    def get_granting_scopes(self):
         scopes = self.resolved_scopes
 
         for user_type in self.user_types.all():
-            scopes.extend(user_type.get_scopes())
+            scopes.extend(user_type.get_granting_scopes())
 
         scopes.append(f"user:{self.id}")
         return scopes
@@ -93,7 +93,7 @@ class Pet(ScopedModelMixin, models.Model):
     name = models.CharField(max_length=128)
     age = models.PositiveIntegerField()
 
-    def get_base_scopes(self):
+    def get_required_scopes(self):
         return [
             create_scope("pet", self.id),
             create_scope("user", self.user.id, "pet", self.id),
