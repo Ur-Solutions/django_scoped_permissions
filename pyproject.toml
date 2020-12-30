@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django_scoped_permissions"
-version = "0.0.6"
+version = "0.0.7"
 description = "Test scoped permissions"
 authors = ["Magnus Buvarp <magnus.buvarp@gmail.com>"]
 license = "MIT"
@@ -20,7 +20,7 @@ pytest = "^5.3.5"
 pytest-django = "^3.8.0"
 pytest-watch = "^4.2.0"
 setuptools = "^45.2.0"
-wheel = "^0.34.2"
+wheel = "^0.35.1"
 twine = "^3.1.1"
 pytest-cov = "^2.9.0"
 pytest-testmon = "^1.0.3"
