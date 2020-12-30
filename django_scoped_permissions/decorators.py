@@ -2,6 +2,8 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 
+from django_scoped_permissions.graphql_util import expand_scopes_from_context
+
 
 def gql_has_scoped_permissions(
     *permissions, fail_message: str = "You are not permitted to view this",
@@ -30,11 +32,16 @@ def gql_has_scoped_permissions(
             if not hasattr(info, "context") or not hasattr(info.context, "user"):
                 raise PermissionDenied(fail_message)
 
+            context = {}
+            context["context"] = info.context
+            context["user"] = info.user
+            expanded_permissions = expand_scopes_from_context(permissions, context)
+
             user = info.context.user
             if (
                 (not user or user.is_anonymous)
-                and len(permissions) > 0
-                or not user.has_any_scoped_permissions(*permissions)
+                and len(expanded_permissions) > 0
+                or not user.has_any_scoped_permissions(*expanded_permissions)
             ):
                 raise PermissionDenied(fail_message)
             return func(cls, info, *args, **kwargs)
@@ -46,8 +53,9 @@ def gql_has_scoped_permissions(
 
 gql_has_any_scoped_permissions = gql_has_scoped_permissions
 
+
 def gql_has_all_scoped_permissions(
-        *permissions, fail_message: str = "You are not permitted to view this",
+    *permissions, fail_message: str = "You are not permitted to view this",
 ):
     """
     gql_has_permissions is a function which wraps a `resolve_<x>` or
@@ -73,11 +81,16 @@ def gql_has_all_scoped_permissions(
             if not hasattr(info, "context") or not hasattr(info.context, "user"):
                 raise PermissionDenied(fail_message)
 
+            context = {}
+            context["context"] = info.context
+            context["user"] = info.user
+            expanded_permissions = expand_scopes_from_context(permissions, context)
+
             user = info.context.user
             if (
-                    (not user or user.is_anonymous)
-                    and len(permissions) > 0
-                    or not user.has_all_scoped_permissions(*permissions)
+                (not user or user.is_anonymous)
+                and len(permissions) > 0
+                or not user.has_all_scoped_permissions(*expanded_permissions)
             ):
                 raise PermissionDenied(fail_message)
             return func(cls, info, *args, **kwargs)

@@ -7,8 +7,8 @@ class TestExpandScopes(TestCase):
     def test__no_expansions__return_scopes(self):
         scopes = ["some:scope", "another:scope"]
 
-        self.assertListEqual(scopes, expand_scopes(scopes))
-        self.assertListEqual(scopes, expand_scopes(scopes, {}))
+        self.assertListEqual(scopes, list(expand_scopes(scopes)))
+        self.assertListEqual(scopes, list(expand_scopes(scopes, {})))
 
     def test__single_expansion_array__returns_interpolated_expansion(self):
         scopes = ["some:{scope}", "another:scope"]

@@ -1,6 +1,6 @@
 import factory
 
-from django_scoped_permissions.tests.models import User, Pet
+from django_scoped_permissions.tests.models import User, Pet, Company
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -20,3 +20,10 @@ class PetFactory(factory.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     name = "Pet"
     age = 10
+
+
+class CompanyFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Company
+
+    short_name = factory.Sequence(lambda n: "company%d" % n)
