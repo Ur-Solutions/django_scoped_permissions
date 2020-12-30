@@ -3,7 +3,6 @@ from typing import Optional
 from django.db import models
 from django.db.models import Value, F, Case, When
 from django.db.models.functions import Concat
-from django.utils.functional import cached_property
 
 from django_scoped_permissions.core import any_scope_matches, scopes_grant_permissions
 
@@ -48,7 +47,7 @@ class HasScopedPermissionsMixin(models.Model):
     scoped_permissions = models.ManyToManyField(ScopedPermission, blank=True)
     scoped_permission_groups = models.ManyToManyField(ScopedPermissionGroup, blank=True)
 
-    @cached_property
+    @property
     def resolved_group_scopes(self):
         scopes = ScopedPermission.objects.filter(
             in_groups__in=self.scoped_permission_groups.all()
@@ -63,7 +62,7 @@ class HasScopedPermissionsMixin(models.Model):
 
         return list(scopes.values_list("parsed_scope", flat=True))
 
-    @cached_property
+    @property
     def resolved_scopes(self):
         scopes = self.scoped_permissions.all() | ScopedPermission.objects.filter(
             in_groups__in=self.scoped_permission_groups.all()
@@ -93,12 +92,12 @@ class HasScopedPermissionsMixin(models.Model):
         return self.has_any_scoped_permissions(*required_scopes)
 
     def has_any_scoped_permissions(self, *required_scopes):
-        scopes = self.get_scopes()
+        scopes = self.get_granting_scopes()
 
         return scopes_grant_permissions(required_scopes, scopes)
 
     def has_all_scoped_permissions(self, *required_scopes):
-        scopes = self.get_scopes()
+        scopes = self.get_granting_scopes()
 
         for scope in required_scopes:
             if not any_scope_matches([scope], scopes):
@@ -106,9 +105,37 @@ class HasScopedPermissionsMixin(models.Model):
 
         return True
 
-    def has_create_permission(self, model_name: str, action: str = "create"):
-        scopes = self.get_scopes()
-        return f"-{model_name}:{action}" not in scopes
+    def add_or_create_permission(
+        self, scoped_permission: str, exact=False, exclude=False
+    ):
+        """
+        Helper method which adds a permission defined by the arguments to the permission holder.
+        If a ScopedPermission object matching the argument does not exist, a new one will be created.
+
+        The exact and exclude properties of the scope can be added either directly in the string, e.g.
+
+            add_or_create_permission("-=scope1:scope2")
+
+        Or as parameters
+
+            add_or_create_permission("scope1:scope2", exact=False, exclude=False)
+        """
+
+        if scoped_permission.startswith("-"):
+            exclude = True
+            scoped_permission = scoped_permission[1:]
+
+        if scoped_permission.startswith("="):
+            exact = True
+            scoped_permission = scoped_permission[1:]
+
+        scope, _ = ScopedPermission.objects.get_or_create(
+           scope=scoped_permission,
+           exclude=exclude,
+           exact=exact
+        )
+
+        self.scoped_permissions.add(scope)
 
 
 class ScopedModelMixin:
