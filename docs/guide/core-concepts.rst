@@ -139,3 +139,15 @@ Exact exclusion permissions
 We can combine the above two notions, e.g. `-=organization:2`. This will revoke access to exactly the permission `organization:2`.
 
 Interestingly, this will still grant access to required permissions such as `organization:2:user`.
+
+
+Final note
+-------------------------------
+Note that while a lot of the remaining part of the documentation will revolve aronud how to set up permissions
+using the database, the library can be used fully statelessly.
+
+The library's primary purpose is to provide helper methods and methodology for using the above schematics
+to do permission matching. Hence it is fully possible to simply generate a scoped permissions on runtime,
+and then match with required static or dynamic permissions.
+
+This will be explored in a later chapter.
