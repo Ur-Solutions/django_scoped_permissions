@@ -226,6 +226,8 @@ Here we also use another utility function which expands a scope permission strin
 
 .. code-block:: python
 
+    from django_scoped_permissions.util import expand_scopes_from_context
+
     class User(AbstractUser, ScopedPermissionHolder):
 
         def get_granting_scopes(self):

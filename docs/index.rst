@@ -17,6 +17,7 @@ Such a scoped permission typically follows the natural hierarchy of your busines
    guide/view-decorators
    guide/graphene-integration
    guide/graphene-django-cud-integration
+   guide/stateless-usage
 
 .. toctree::
    :maxdepth: 2
