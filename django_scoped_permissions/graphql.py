@@ -19,7 +19,7 @@ from django_scoped_permissions.graphql_util import (
     create_resolver_from_method,
     create_resolver_from_scopes,
 )
-from django_scoped_permissions.models import HasScopedPermissionsMixin, ScopedModelMixin
+from django_scoped_permissions.models import ScopedPermissionHolder, ScopedModelMixin
 
 
 class ScopedDjangoNodeOptions(DjangoObjectTypeOptions):
@@ -124,7 +124,7 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):
@@ -145,7 +145,7 @@ class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):
@@ -192,7 +192,7 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):
@@ -250,7 +250,7 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):
@@ -308,7 +308,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):
@@ -341,7 +341,7 @@ class ScopedDjangoBatchDeleteMutation(DjangoBatchDeleteMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):
@@ -363,7 +363,7 @@ class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
 
         expanded_permissions = expand_scopes_from_context(permissions, context)
 
-        if not isinstance(info.context.user, HasScopedPermissionsMixin):
+        if not isinstance(info.context.user, ScopedPermissionHolder):
             raise GraphQLError("You are not permitted to view this.")
 
         if not info.context.user.has_scoped_permissions(*expanded_permissions):

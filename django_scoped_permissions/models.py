@@ -40,7 +40,29 @@ class ScopedPermissionGroup(models.Model):
         return self.name
 
 
-class HasScopedPermissionsMixin(models.Model):
+class ScopedPermissionHolderMixin(object):
+
+    def get_granting_scopes(self):
+        return []
+
+    def has_scoped_permissions(self, *required_scopes):
+        return self.has_any_scoped_permissions(*required_scopes)
+
+    def has_any_scoped_permissions(self, *required_scopes):
+        scopes = self.get_granting_scopes()
+
+        return scopes_grant_permissions(required_scopes, scopes)
+
+    def has_all_scoped_permissions(self, *required_scopes):
+        scopes = self.get_granting_scopes()
+
+        for scope in required_scopes:
+            if not any_scope_matches([scope], scopes):
+                return False
+
+        return True
+
+class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
     class Meta:
         abstract = True
 
@@ -138,6 +160,9 @@ class HasScopedPermissionsMixin(models.Model):
         self.scoped_permissions.add(scope)
 
 
+# DEPRECATED: Use ScopedPermissionHolder
+HasScopedPermissionMixin = ScopedPermissionHolder
+
 class ScopedModelMixin:
     def get_base_scopes(self):
         """
@@ -149,7 +174,7 @@ class ScopedModelMixin:
         return []
 
     def has_permission(
-        self, user: HasScopedPermissionsMixin, action: Optional[str] = None
+        self, user: ScopedPermissionHolderMixin, action: Optional[str] = None
     ):
         if getattr(user, "is_superuser", False):
             return True

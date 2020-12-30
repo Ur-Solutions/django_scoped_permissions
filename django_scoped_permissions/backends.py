@@ -1,7 +1,7 @@
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import AbstractUser
 
-from django_scoped_permissions.models import HasScopedPermissionsMixin, ScopedModelMixin
+from django_scoped_permissions.models import ScopedPermissionHolder, ScopedModelMixin
 
 
 class ScopedAuthenticationBackend(ModelBackend):
@@ -12,7 +12,7 @@ class ScopedAuthenticationBackend(ModelBackend):
         if user_obj.is_superuser:
             return True
 
-        if not isinstance(user_obj, HasScopedPermissionsMixin):
+        if not isinstance(user_obj, ScopedPermissionHolder):
             return None
 
         if not obj:

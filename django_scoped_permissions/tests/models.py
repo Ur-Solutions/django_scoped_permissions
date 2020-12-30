@@ -2,10 +2,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from django_scoped_permissions.core import create_scope
-from django_scoped_permissions.models import HasScopedPermissionsMixin, ScopedModelMixin
+from django_scoped_permissions.models import ScopedPermissionHolder, ScopedModelMixin
 
 
-class User(HasScopedPermissionsMixin, AbstractUser):
+class User(ScopedPermissionHolder, AbstractUser):
     class Meta:
         indexes = (models.Index(fields=("email",)),)
 
@@ -54,7 +54,7 @@ class Company(models.Model):
         return self.name
 
 
-class UserType(HasScopedPermissionsMixin, ScopedModelMixin, models.Model):
+class UserType(ScopedPermissionHolder, ScopedModelMixin, models.Model):
     class Meta:
         pass
 
