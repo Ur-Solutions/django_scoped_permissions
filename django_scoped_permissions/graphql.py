@@ -14,7 +14,7 @@ from graphene_django_cud.mutations.update import (
 )
 from graphql import GraphQLError
 
-from django_scoped_permissions.graphql_util import (
+from django_scoped_permissions.util import (
     expand_scopes_from_context,
     create_resolver_from_method,
     create_resolver_from_scopes,

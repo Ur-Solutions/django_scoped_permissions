@@ -92,7 +92,7 @@ class TestHasScopedPermissionMixin(TestCase):
         user.add_or_create_permission("scope3")
         user.add_or_create_permission("-scope3:scope4")
         self.assertTrue(user.has_any_scoped_permissions("scope3:scope5"))
-        self.assertFalse(user.has_any_scoped_permissions("scope3:scope4"))
+        self.assertFalse(user.has_any_scoped_permissions("scope3:scope4:scope5"))
 
     def test_add_or_create_permission__permission_exists__reuses(self):
         permission_1 = ScopedPermission.objects.create(

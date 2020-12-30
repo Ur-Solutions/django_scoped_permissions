@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from django_scoped_permissions.graphql_util import expand_scopes, expand_scopes_from_context
+from django_scoped_permissions.util import expand_scopes, expand_scopes_from_context
 
 
 class TestExpandScopes(TestCase):

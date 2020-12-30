@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 
-from django_scoped_permissions.graphql_util import expand_scopes_from_context
+from django_scoped_permissions.util import expand_scopes_from_context
 
 
 def gql_has_scoped_permissions(
