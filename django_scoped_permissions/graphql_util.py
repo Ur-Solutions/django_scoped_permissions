@@ -1,14 +1,13 @@
 import itertools
 import re
-from typing import Mapping, Iterable, List
-
-from graphql import GraphQLError
-from pydash import get
-
+from typing import Mapping, Iterable
 from django_scoped_permissions.models import ScopedModel
+
+from pydash import get
 
 
 def create_resolver_from_method(field_name, method):
+    from graphql import GraphQLError
     def resolver(object, info, **args):
         if not method(object, info, **args):
             raise GraphQLError("You are not permitted to view this.")
@@ -19,6 +18,7 @@ def create_resolver_from_method(field_name, method):
 
 
 def create_resolver_from_scopes(field_name: str, scopes: [str]):
+    from graphql import GraphQLError
     def resolver(object, info, **args):
 
         user = info.context.user
