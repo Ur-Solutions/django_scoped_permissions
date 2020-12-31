@@ -85,7 +85,7 @@ Say you have the permission :code:`user:1:read`. Now suppose you are trying to a
 Notably, the permission you have is **not** a parent scope of the required permission.
 
 However, the permission internal mechanism will still match these two permissions,
-as the verb will be attached recursively to each parent scope of your granting permission when trying to matching the permissions.
+as the verb will be attached recursively to each parent scope of your granting permission when trying to match the permissions.
 
 Other permissions which would have granted access in this scenario are the following:
 
@@ -126,9 +126,10 @@ This can be used on any permission string:
 
 Exclusion permissions
 -------------------------
-Another problem we might have, is revoking specific permissions. Say for instance that you want a user by default to have access to all organizations, so the user has the permission :code:`organization`, but not to the organization with id 2.
+Another problem we might have, is revoking specific permissions. Say for instance that you want a user by default to have access to all organizations, so the user has the permission :code:`organization`.
+But you also want to revoke access to the organization with id 2.
 
-We can achieve this with an **exclusion permission**: :code:`-organization:2`. In combination, these two permission yields access to all organizations apart from the organization with id 2.
+We can achieve this with an **exclusion permission**: :code:`-organization:2`. In combination, these two permissions yield access to all organizations apart from the organization with id 2.
 
 
 Exact exclusion permissions
