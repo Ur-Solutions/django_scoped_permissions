@@ -55,7 +55,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install twine
-        pip install poetry==1.0.0
+        pip install wheel
+        pip install poetry==1.1.4
         poetry config virtualenvs.create false
         poetry install --no-interaction
     - name: Build package
