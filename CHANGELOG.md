@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.0.8
+* Fix bad graphene-django-cud pin
+
 ## Version 0.0.7
 * (docs): Add documentation
 * Improve core
