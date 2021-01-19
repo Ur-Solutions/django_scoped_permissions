@@ -224,7 +224,7 @@ test = ["pytest (>=3.6.3)", "pytest-cov", "coveralls", "mock", "pytz", "pytest-d
 
 [[package]]
 name = "graphene-django-cud"
-version = "0.6.4"
+version = "0.7.1"
 description = "Create, update and delete mutations for graphene-django"
 category = "main"
 optional = false
@@ -770,7 +770,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "6830f66940a513e579e17045c790c5acb61fa504f99af593cf8b4d77bf1c0d9f"
+content-hash = "5ea6a4da3680a99935b4acc04cd4b5c0441b8f6e2f240c9d51ddd9898d3e6a2d"
 
 [metadata.files]
 addict = [
@@ -940,8 +940,8 @@ graphene-django = [
     {file = "graphene_django-2.14.0-py2.py3-none-any.whl", hash = "sha256:68d5c52f775dea6f5e0578b2c09c0a7cddeb48a957a0000b289d6e6145d6a86d"},
 ]
 graphene-django-cud = [
-    {file = "graphene-django-cud-0.6.4.tar.gz", hash = "sha256:acc318666246a2e7b76dfefaddd343da30f64debabf825099417040baa27046f"},
-    {file = "graphene_django_cud-0.6.4-py3-none-any.whl", hash = "sha256:36a39a4c9646906e63fbdd8b36c7de37b50d4f6ca447977d3043a7381a769661"},
+    {file = "graphene-django-cud-0.7.1.tar.gz", hash = "sha256:ed914d1a0ef81c6d76f3ae0c5332333e7d50b1568a6aca378a03fa20082b0dc3"},
+    {file = "graphene_django_cud-0.7.1-py3-none-any.whl", hash = "sha256:8e66a8a15a8ef0c13062e1df7b518a526d384450d34f2bebe1eaf53db7bb94e7"},
 ]
 graphene-file-upload = [
     {file = "graphene_file_upload-1.2.2-py3-none-any.whl", hash = "sha256:034ff72d2834b7aebd06fda412fa88a10aba34bac604317f7552457e47040654"},
