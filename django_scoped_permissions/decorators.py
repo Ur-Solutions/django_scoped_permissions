@@ -34,7 +34,7 @@ def gql_has_scoped_permissions(
 
             context = {}
             context["context"] = info.context
-            context["user"] = info.user
+            context["user"] = info.context.user
             expanded_permissions = expand_scopes_from_context(permissions, context)
 
             user = info.context.user
@@ -83,7 +83,7 @@ def gql_has_all_scoped_permissions(
 
             context = {}
             context["context"] = info.context
-            context["user"] = info.user
+            context["user"] = info.context.user
             expanded_permissions = expand_scopes_from_context(permissions, context)
 
             user = info.context.user
