@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="django-scoped-permissions",
-    version="0.0.8",
+    version="0.0.9",
     author="Tormod Haugland, Magnus Buvarp",
     author_email="tormod.haugland@gmail.com, magnus.buvarp@gmail.com",
     description="Scoped permission system for Django",
