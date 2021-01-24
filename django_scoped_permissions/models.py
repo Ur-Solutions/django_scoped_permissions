@@ -41,7 +41,6 @@ class ScopedPermissionGroup(models.Model):
 
 
 class ScopedPermissionHolderMixin(object):
-
     def get_granting_scopes(self):
         return []
 
@@ -61,6 +60,14 @@ class ScopedPermissionHolderMixin(object):
                 return False
 
         return True
+
+    def has_access_to(self, model: "ScopedModelMixin", verb: Optional[str] = None):
+
+        granting_scopes = self.get_granting_scopes()
+        required_scopes = model.get_required_scopes()
+
+        return scopes_grant_permissions(required_scopes, granting_scopes, verb)
+
 
 class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
     class Meta:
@@ -152,9 +159,7 @@ class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
             scoped_permission = scoped_permission[1:]
 
         scope, _ = ScopedPermission.objects.get_or_create(
-           scope=scoped_permission,
-           exclude=exclude,
-           exact=exact
+            scope=scoped_permission, exclude=exclude, exact=exact
         )
 
         self.scoped_permissions.add(scope)
@@ -162,6 +167,7 @@ class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
 
 # DEPRECATED: Use ScopedPermissionHolder
 HasScopedPermissionMixin = ScopedPermissionHolder
+
 
 class ScopedModelMixin:
     def get_base_scopes(self):
@@ -173,16 +179,21 @@ class ScopedModelMixin:
     def get_required_scopes(self):
         return []
 
+    def can_be_accessed_by(
+        self, holder: ScopedPermissionHolderMixin, action: Optional[str] = None
+    ):
+        user_scopes = holder.get_granting_scopes()
+        required_scopes = self.get_required_scopes()
+
+        return scopes_grant_permissions(required_scopes, user_scopes, action)
+
     def has_permission(
         self, user: ScopedPermissionHolderMixin, action: Optional[str] = None
     ):
-        if getattr(user, "is_superuser", False):
-            return True
-
-        user_scopes = user.get_granting_scopes()
-        base_scopes = self.get_required_scopes()
-
-        return scopes_grant_permissions(base_scopes, user_scopes, action)
+        """
+        DEPRECATED: Use `can_be_accessed_by`.
+        """
+        return self.can_be_accessed_by(user, action)
 
 
 class ScopedModel(models.Model, ScopedModelMixin):

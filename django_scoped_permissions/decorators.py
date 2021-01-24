@@ -6,7 +6,8 @@ from django_scoped_permissions.util import expand_scopes_from_context
 
 
 def gql_has_scoped_permissions(
-    *permissions, fail_message: str = "You are not permitted to view this",
+    *permissions,
+    fail_message: str = "You are not permitted to view this",
 ):
     """
     gql_has_permissions is a function which wraps a `resolve_<x>` or
@@ -17,12 +18,8 @@ def gql_has_scoped_permissions(
     as necessary to access the resource.
 
     :param permissions: The permission required to access the wrapped resource.
-    :param fail_to_none: If true, and the user is not authorized, the field will resolve to None.
-                            If false, the entire query will fail dramatically in a 401.
     :param fail_message: If fail_to_none is false, and the permission fails, this variable determines
                          the string which is thrown in the exception.
-    :param fail_to_lambda: If not none, and the permission fails, this variable (assumed to be a function)
-                           will be called.
     :return:
     """
 
@@ -66,12 +63,8 @@ def gql_has_all_scoped_permissions(
     as necessary to access the resource.
 
     :param permissions: The permission required to access the wrapped resource.
-    :param fail_to_none: If true, and the user is not authorized, the field will resolve to None.
-                            If false, the entire query will fail dramatically in a 401.
     :param fail_message: If fail_to_none is false, and the permission fails, this variable determines
                          the string which is thrown in the exception.
-    :param fail_to_lambda: If not none, and the permission fails, this variable (assumed to be a function)
-                           will be called.
     :return:
     """
 
