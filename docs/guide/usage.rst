@@ -21,9 +21,9 @@ and :code:`scopes_grant_permissions` methods.
 
     # First argument is required scopes, second is granting scopes. Note that the method
     # returns true if _any_ matches. Also note that any excluding permission takes precedence.
-    scopes_grants_permissions(["scope1:scope2"], ["scope1"])  # True
-    scopes_grants_permissions(["scope1:scope2"], ["=scope1", "scope1"])  # True
-    scopes_grants_permissions(["scope1:scope2"], ["-scope1", "scope1:scope2"])  # False
+    scopes_grant_permissions(["scope1:scope2"], ["scope1"])  # True
+    scopes_grant_permissions(["scope1:scope2"], ["=scope1", "scope1"])  # True
+    scopes_grant_permissions(["scope1:scope2"], ["-scope1", "scope1:scope2"])  # False
 
 These methods also accepts a third argument for the required `verb`.
 
@@ -37,10 +37,10 @@ These methods also accepts a third argument for the required `verb`.
     scope_grants_permission("scope1:scope2", "scope1:scope2:read", "read")  # True
     scope_grants_permission("scope1:scope2", "scope1:scope2:update", "read")  # False
 
-    scopes_grants_permissions(["scope1:scope2"], ["scope1", "scope1:read"], "read") # True
-    scopes_grants_permissions(["scope1:read", "scope3:update"], ["scope3", "=scope1:read"], "read") # True
+    scopes_grant_permissions(["scope1:scope2"], ["scope1", "scope1:read"], "read") # True
+    scopes_grant_permissions(["scope1:read", "scope3:update"], ["scope3", "=scope1:read"], "read") # True
     # Note here that since we have a direct exclude on scope3:update, the request is disallowed.
-    scopes_grants_permissions(["scope1:read", "scope3:update"], ["-scope3:update", "=scope1:read"], "read") # False
+    scopes_grant_permissions(["scope1:read", "scope3:update"], ["-scope3:update", "=scope1:read"], "read") # False
 
 
 Under the hood, these methods use the :code:`scope_matches` method, which simply makes a required scope with a granting scope.
