@@ -169,3 +169,7 @@ class ScopedPermissionGuard:
         guard = ScopedPermissionGuard(self.root)
         guard.root = SPRNot(guard.root)
         return guard
+
+    def __len__(self):
+        # Temporary to work around graphene-django-cuds length requirement for permissions
+        return 1
