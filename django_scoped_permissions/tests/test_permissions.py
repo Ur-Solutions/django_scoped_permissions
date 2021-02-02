@@ -6,7 +6,6 @@ from django_scoped_permissions.core import scopes_grant_permissions
 from django_scoped_permissions.tests.factories import UserFactory
 
 from django_scoped_permissions.decorators import (
-    gql_has_all_scoped_permissions,
     gql_has_scoped_permissions,
 )
 from django_scoped_permissions.models import ScopedPermission
@@ -195,39 +194,3 @@ class TestGqlHasScopedPermissions(TestCase):
         with self.assertRaises(PermissionDenied):
             wrapper_method(None, info)
 
-
-class TestGqlHasAllScopedPermissions(TestCase):
-    def test__user_has_permission__succeeds(self):
-        @gql_has_all_scoped_permissions(
-            "simple:scope", "simple:scope:nested", "other:scope"
-        )
-        def wrapper_method(cls, info, *args, **kwargs):
-            return True
-
-        user = UserFactory.create()
-        user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope")
-        )
-        user.scoped_permissions.add(ScopedPermission.objects.create(scope="other"))
-
-        info = Dict(context=Dict(user=user))
-
-        result = wrapper_method(None, info)
-        self.assertTrue(result)
-
-    def test__user_does_not_have_permission__fails(self):
-        @gql_has_all_scoped_permissions(
-            "simple:scope", "simple:scope:nested", "other:scope"
-        )
-        def wrapper_method(cls, info, *args, **kwargs):
-            return True
-
-        user = UserFactory.create()
-        user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope")
-        )
-
-        info = Dict(context=Dict(user=user))
-
-        with self.assertRaises(PermissionDenied):
-            wrapper_method(None, info)
