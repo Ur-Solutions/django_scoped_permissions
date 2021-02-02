@@ -28,9 +28,7 @@ def scope_grants_permission(
     if granting_scope.startswith("="):
         expanded_scopes = expand_scopes_with_verb([required_scope], verb)
     else:
-        expanded_scopes = expand_scopes_with_verb_recursively(
-            [required_scope], verb
-        )
+        expanded_scopes = expand_scopes_with_verb_recursively([required_scope], verb)
 
     return any_scope_matches(expanded_scopes, [granting_scope])
 
@@ -52,6 +50,9 @@ def scopes_grant_permissions(
         4. If the user has a scope that matches any of the scopes, we return True.
         5. Return False
     """
+    if len(required_scopes) == 0:
+        return True
+
     exclude_exact, include_exact, exclude, include = partition_scopes(granting_scopes)
 
     required_base_scopes_with_verb = expand_scopes_with_verb(required_scopes, verb)
