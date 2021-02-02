@@ -116,6 +116,7 @@ class ScopedPermissionGuard:
             self.root = SPRUnOp(ScopedPermissionRequirement(args[0], args[1]))
         else:
             self.root = self._get_overloaded_arg(args[0])
+
             for arg in args[1:]:
                 self.root = SPROr(self.root, self._get_overloaded_arg(arg))
 
@@ -130,6 +131,15 @@ class ScopedPermissionGuard:
             return arg.root
         elif isinstance(arg, (SPRBinOp, SPRUnOp)):
             return arg
+        elif isinstance(arg, (tuple, list)):
+            base = self._get_overloaded_arg(arg[0])
+
+            for arg in arg[1:]:
+                base = SPROr(base, self._get_overloaded_arg(arg))
+
+            return base
+        else:
+            return SPRUnOp(False)
 
     def has_permission(self, granting_scopes: Union[List[str], str], context=None):
         if isinstance(granting_scopes, str):
