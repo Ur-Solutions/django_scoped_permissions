@@ -21,7 +21,6 @@ def _evaluate_value(value, granting_scopes: List[str], context=None):
 
     granting_scopes = expand_scopes_from_context(granting_scopes, context)
 
-
     if isinstance(value, SPRBinOp) or isinstance(value, SPRUnOp):
         return value.has_permission(granting_scopes, context)
     elif isinstance(value, str):
@@ -109,7 +108,12 @@ class ScopedPermissionGuard:
             verb = kwargs.get("verb", None)
             self.root = SPRUnOp(ScopedPermissionRequirement(scope, verb))
         elif len(args) == 1:
-            self.root = self._get_overloaded_arg(args[0])
+            if "verb" in kwargs and isinstance(args[0], str):
+                self.root = SPRUnOp(ScopedPermissionRequirement(args[0], args[1]))
+            else:
+                self.root = self._get_overloaded_arg(args[0])
+        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
+            self.root = SPRUnOp(ScopedPermissionRequirement(args[0], args[1]))
         else:
             self.root = self._get_overloaded_arg(args[0])
             for arg in args[1:]:
