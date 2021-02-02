@@ -4,7 +4,7 @@ from django.db.models.base import ModelBase
 
 
 def scope_grants_permission(
-    required_scope: str, granting_scope: str, action: Optional[str] = None
+    required_scope: str, granting_scope: str, verb: Optional[str] = None
 ):
     """
     scope_grants_permission checks if a single granting scope matches a single required scope.
@@ -13,8 +13,8 @@ def scope_grants_permission(
 
     1. If the granting_scope has an exclusion rule (starts with "-"), we always return false.
     2. If the scopes are equal, we always returns true.
-    3. If the granting_scope is an exact rule (starts with "="), we expand the required scope non-recursively with the action, and then check for equality.
-    4. Exapnd the required scope recursively with the action and check if the scopes match.
+    3. If the granting_scope is an exact rule (starts with "="), we expand the required scope non-recursively with the verb, and then check for equality.
+    4. Exapnd the required scope recursively with the verb and check if the scopes match.
 
     """
     # Single negation permissions will never grant access
@@ -24,19 +24,19 @@ def scope_grants_permission(
     if required_scope == granting_scope:
         return True
 
-    # The equal case will not have the action applied recursively
+    # The equal case will not have the verb applied recursively
     if granting_scope.startswith("="):
-        expanded_scopes = expand_scopes_with_action([required_scope], action)
+        expanded_scopes = expand_scopes_with_verb([required_scope], verb)
     else:
-        expanded_scopes = expand_scopes_with_action_recursively(
-            [required_scope], action
+        expanded_scopes = expand_scopes_with_verb_recursively(
+            [required_scope], verb
         )
 
     return any_scope_matches(expanded_scopes, [granting_scope])
 
 
 def scopes_grant_permissions(
-    required_scopes: [str], granting_scopes: [str], action: Optional[str] = None
+    required_scopes: [str], granting_scopes: [str], verb: Optional[str] = None
 ):
     """
     scopes_grants_permission takes as arguments a number of required base scopes,
@@ -45,34 +45,34 @@ def scopes_grant_permissions(
     required base scopes.
     This depends on multiple facts. But primarily, we check the following:
         1. If the user has an exact negation which matches one of the base_scopes,
-           or the base_scopes with the action expanded, we return False.
+           or the base_scopes with the verb expanded, we return False.
         2. If the user has an exact scope which matches one of the base_scopes,
-           or the base_scopes with the action expanded, we return True.
+           or the base_scopes with the verb expanded, we return True.
         3. If the user has a negation that matches any of the scopes (expanded or not), we return False.
         4. If the user has a scope that matches any of the scopes, we return True.
         5. Return False
     """
     exclude_exact, include_exact, exclude, include = partition_scopes(granting_scopes)
 
-    required_base_scopes_with_action = expand_scopes_with_action(required_scopes, action)
-    required_scopes_with_action = expand_scopes_with_action_recursively(
-        required_scopes, action
+    required_base_scopes_with_verb = expand_scopes_with_verb(required_scopes, verb)
+    required_scopes_with_verb = expand_scopes_with_verb_recursively(
+        required_scopes, verb
     )
 
     # Check case 1
-    if any_scope_matches(required_base_scopes_with_action, exclude_exact):
+    if any_scope_matches(required_base_scopes_with_verb, exclude_exact):
         return False
 
     # Check case 2
-    if any_scope_matches(required_base_scopes_with_action, include_exact):
+    if any_scope_matches(required_base_scopes_with_verb, include_exact):
         return True
 
     # Check case 3
-    if any_scope_matches(required_scopes_with_action, exclude):
+    if any_scope_matches(required_scopes_with_verb, exclude):
         return False
 
     # Check case 4
-    if any_scope_matches(required_scopes_with_action, include):
+    if any_scope_matches(required_scopes_with_verb, include):
         return True
 
     return False
@@ -94,33 +94,33 @@ def any_scope_matches(required_scopes: [str], scopes: [str]):
 
 
 ### HELPERS ###
-def expand_scopes_with_action(scopes: [str], action: str):
+def expand_scopes_with_verb(scopes: [str], verb: str):
     """
-    Appends an action to the scopes given.
+    Appends an verb to the scopes given.
     Example:
         scopes: ["user:1", "company:1:user:1"]
-        action: edit
+        verb: edit
         [
             "user:1:edit",
             "company:1:user:1:edit",
         ]
     :param scopes:
-    :param action:
+    :param verb:
     :return:
     """
-    if not action:
+    if not verb:
         return scopes
 
-    return [create_scope(scope, action) for scope in scopes]
+    return [create_scope(scope, verb) for scope in scopes]
 
 
-def expand_scopes_with_action_recursively(scopes: [str], action: str):
+def expand_scopes_with_verb_recursively(scopes: [str], verb: str):
     """
-    Appends an action to all sub-scopes for every scope in a list of scopes.
-    Note that the action itself is also added to the list.
+    Appends an verb to all sub-scopes for every scope in a list of scopes.
+    Note that the verb itself is also added to the list.
     Example:
         scopes: ["user:1", "company:1:user:1"]
-        action: edit
+        verb: edit
         [
             "edit",
             "user:1:edit",
@@ -131,17 +131,17 @@ def expand_scopes_with_action_recursively(scopes: [str], action: str):
             "company:edit"
         ]
     :param scopes:
-    :param action:
+    :param verb:
     :return:
     """
-    if not action:
+    if not verb:
         return scopes
 
-    result = [action]
+    result = [verb]
     for scope in scopes:
         parts = scope.split(":")
         for i in range(len(parts)):
-            new_scope = create_scope(*parts[: i + 1], action)
+            new_scope = create_scope(*parts[: i + 1], verb)
             result.append(new_scope)
 
     return result

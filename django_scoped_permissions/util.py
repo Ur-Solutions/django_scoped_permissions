@@ -1,6 +1,9 @@
 import itertools
 import re
 from typing import Mapping, Iterable
+
+from django.contrib.auth.decorators import login_required
+
 from django_scoped_permissions.models import ScopedModel
 
 from pydash import get
