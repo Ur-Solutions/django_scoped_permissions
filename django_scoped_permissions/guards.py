@@ -21,14 +21,18 @@ def _evaluate_value(value, granting_scopes: List[str], context=None):
 
     granting_scopes = expand_scopes_from_context(granting_scopes, context)
 
+
     if isinstance(value, SPRBinOp) or isinstance(value, SPRUnOp):
-        return value.has_permission(granting_scopes)
+        return value.has_permission(granting_scopes, context)
     elif isinstance(value, str):
-        return scopes_grant_permissions(granting_scopes, [value])
+        required_scopes = expand_scopes_from_context([value], context)
+        return scopes_grant_permissions(required_scopes, granting_scopes)
     elif isinstance(value, list):
-        return scopes_grant_permissions(granting_scopes, value)
+        required_scopes = expand_scopes_from_context(value, context)
+        return scopes_grant_permissions(required_scopes, granting_scopes)
     elif isinstance(value, ScopedPermissionRequirement):
-        return scopes_grant_permissions([value.scope], granting_scopes, value.verb)
+        required_scopes = expand_scopes_from_context([value.scope], context)
+        return scopes_grant_permissions(required_scopes, granting_scopes, value.verb)
     elif isinstance(value, bool):
         return value
     else:

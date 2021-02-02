@@ -4,7 +4,6 @@ from django_scoped_permissions.guards import ScopedPermissionGuard
 
 
 class TestScopedPermissionGuard(TestCase):
-
     def test__guard_with_scope__grants_and_denies_access_correctly(self):
         guard = ScopedPermissionGuard("scope1:scope2")
 
@@ -13,7 +12,9 @@ class TestScopedPermissionGuard(TestCase):
         self.assertTrue(guard.has_permission("scope1:scope2"))
         self.assertFalse(guard.has_permission("scope"))
 
-    def test__guard_with_multiple_scopes__grants_and_denies_access_with_OR_functionality(self):
+    def test__guard_with_multiple_scopes__grants_and_denies_access_with_OR_functionality(
+        self,
+    ):
         guard = ScopedPermissionGuard("scope1:scope2", "scope3:scope4")
 
         self.assertTrue(guard.has_permission("scope1"))
@@ -96,3 +97,17 @@ class TestScopedPermissionGuard(TestCase):
         self.assertTrue(guard.has_permission("scope2"))
         self.assertFalse(guard.has_permission("scope1:scope2"))
         self.assertTrue(guard.has_permission("scope"))
+
+    def test__guard_with_context__is_expanded_and_checked(self):
+        guard = ScopedPermissionGuard("scope1:{var}")
+
+        self.assertTrue(guard.has_permission("scope1", context={}))
+        self.assertTrue(
+            guard.has_permission("scope1:scope2", context={"var": "scope2"})
+        )
+        self.assertTrue(
+            guard.has_permission(
+                "scope1:scope3",
+                context={"var": ["scope2", "scope3"], "other": ["scope4"]},
+            )
+        )
