@@ -3,7 +3,6 @@ from graphene import Node
 from graphene_django import DjangoObjectType, DjangoConnectionField
 from graphql import GraphQLError
 
-from build.lib.django_scoped_permissions.util import read_scoped
 from django_scoped_permissions.core import create_scope
 from django_scoped_permissions.graphql import (
     ScopedDjangoCreateMutation,
@@ -40,7 +39,7 @@ class PetQuery(graphene.ObjectType):
     def resolve_all_pets(self, info, *args, **kwargs):
         user = info.context.user
         company = info.context.company
-        return read_scoped(Pet.objects.all(), user, company, {"user": user})
+        return Pet.objects.all()
 
 
 class CreatePetMutation(ScopedDjangoCreateMutation):
