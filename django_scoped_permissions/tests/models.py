@@ -2,10 +2,14 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from django_scoped_permissions.core import create_scope
-from django_scoped_permissions.models import ScopedPermissionHolder, ScopedModelMixin
+from django_scoped_permissions.models import (
+    ScopedPermissionHolder,
+    ScopedModelMixin,
+    ScopedModel,
+)
 
 
-class User(ScopedPermissionHolder, AbstractUser):
+class User(AbstractUser, ScopedPermissionHolder, ScopedModel):
     class Meta:
         indexes = (models.Index(fields=("email",)),)
 
@@ -15,6 +19,9 @@ class User(ScopedPermissionHolder, AbstractUser):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def get_required_scopes(self):
+        return [create_scope(User, self.id)]
 
     def get_granting_scopes(self):
         scopes = self.resolved_scopes
