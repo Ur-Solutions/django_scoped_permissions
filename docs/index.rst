@@ -14,7 +14,8 @@ Such a scoped permission typically follows the natural hierarchy of your busines
    guide/install
    guide/core-concepts
    guide/usage
-   guide/view-decorators
+   guide/guards
+   guide/decorators
    guide/graphene-integration
    guide/graphene-django-cud-integration
    guide/stateless-usage

@@ -2,7 +2,6 @@ import itertools
 import re
 from typing import Mapping, Iterable
 
-from django.contrib.auth.decorators import login_required
 
 from django_scoped_permissions.models import ScopedModel
 
@@ -11,6 +10,7 @@ from pydash import get
 
 def create_resolver_from_method(field_name, method):
     from graphql import GraphQLError
+
     def resolver(object, info, **args):
         if not method(object, info, **args):
             raise GraphQLError("You are not permitted to view this.")
@@ -20,10 +20,13 @@ def create_resolver_from_method(field_name, method):
     return resolver
 
 
-def create_resolver_from_scopes(field_name: str, scopes: [str]):
+def create_resolver_from_scopes(field_name: str, permissions: [str]):
     from graphql import GraphQLError
-    def resolver(object, info, **args):
+    from django_scoped_permissions.guards import ScopedPermissionGuard
 
+    permission_guard = ScopedPermissionGuard(permissions)
+
+    def resolver(object, info, **args):
         user = info.context.user
 
         final_scopes = []
@@ -37,7 +40,7 @@ def create_resolver_from_scopes(field_name: str, scopes: [str]):
         field_value_base_scopes = [""]
         object_base_scopes = [""]
 
-        expansion_map = {}
+        context = {}
 
         if field_value_is_scoped_model:
             field_value_base_scopes = field_value.get_base_scopes()
@@ -45,30 +48,18 @@ def create_resolver_from_scopes(field_name: str, scopes: [str]):
         if object_is_scoped_model:
             object_base_scopes = object.get_base_scopes()
 
-        expansion_map["base_scopes"] = field_value_base_scopes
-        expansion_map["field_scopes"] = object_base_scopes
+        # Deprecated
+        context["base_scopes"] = field_value_base_scopes
+        context["required_scopes"] = field_value_base_scopes
+        context["field_scopes"] = object_base_scopes
 
-        final_scopes = []
-        for scope in scopes:
-            if "{base_scopes}" and "{field_scopes}" in scope:
-                product = itertools.product(object_base_scopes, field_value_base_scopes)
+        granting_permissions = (
+            user.get_granting_permissions()
+            if hasattr(user, "get_granting_permissions")
+            else []
+        )
 
-                for combination in product:
-                    final_scopes.append(
-                        scope.format(
-                            base_scopes=combination[0], field_scopes=combination[1]
-                        )
-                    )
-            elif "{base_scopes}" in scope:
-                for base_scope in object_base_scopes:
-                    final_scopes.append(scope.format(base_scopes=base_scope))
-            elif "{field_scopes}" in scope:
-                for field_scope in field_value_base_scopes:
-                    final_scopes.append(scope.format(field_scopes=base_scope))
-            else:
-                final_scopes.append(scope)
-
-        if not user.has_any_scoped_permissions(*final_scopes):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
         return field_value
