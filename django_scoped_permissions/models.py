@@ -180,20 +180,20 @@ class ScopedModelMixin:
         return []
 
     def can_be_accessed_by(
-        self, holder: ScopedPermissionHolderMixin, action: Optional[str] = None
+        self, holder: ScopedPermissionHolderMixin, verb: Optional[str] = None
     ):
         user_scopes = holder.get_granting_scopes()
         required_scopes = self.get_required_scopes()
 
-        return scopes_grant_permissions(required_scopes, user_scopes, action)
+        return scopes_grant_permissions(required_scopes, user_scopes, verb)
 
     def has_permission(
-        self, user: ScopedPermissionHolderMixin, action: Optional[str] = None
+        self, user: ScopedPermissionHolderMixin, verb: Optional[str] = None
     ):
         """
         DEPRECATED: Use `can_be_accessed_by`.
         """
-        return self.can_be_accessed_by(user, action)
+        return self.can_be_accessed_by(user, verb)
 
 
 class ScopedModel(models.Model, ScopedModelMixin):
