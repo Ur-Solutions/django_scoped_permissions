@@ -1,6 +1,19 @@
 
 # Changelog
 
+## Version 0.1.0
+
+* (core): Renamed action → verb
+* (core): scopes_grant_permissions now returns True if required_scopes is empty.
+* (docs): Add remaining documentation
+* (guards): Introduce new guard system
+* (graphql): ScopedDjangoNode checks permission with a "read" verb by default
+* (graphql): All mutations use the new guard system
+* (decorators): Now support and uses new guard system
+
+## Version 0.0.9
+* Fix bug with decorators context
+
 ## Version 0.0.8
 * Fix bad graphene-django-cud pin
 
