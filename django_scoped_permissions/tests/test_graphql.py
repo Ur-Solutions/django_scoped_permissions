@@ -57,6 +57,17 @@ class TestScopedDjangoNode(TestCase):
         )
         self.assertIsNotNone(result.errors)
 
+        # Can be accessed by someone who has read permissions
+        user_two.add_or_create_permission("user:read")
+        result = schema.execute(
+            query,
+            variables={"id": to_global_id("UserNode", user.id)},
+            context=Dict(user=user),
+        )
+        self.assertIsNone(result.errors)
+        data = Dict(result.data)
+        self.assertEqual("Tormod", data.user.firstName)
+
     def test__node_with_explicit_permissions__has_explicit_permission_handling(
         self,
     ):

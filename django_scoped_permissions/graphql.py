@@ -34,6 +34,7 @@ class ScopedDjangoNodeOptions(DjangoObjectTypeOptions):
     allow_anonymous = False  # type: bool
     node_permissions = None  # type: Tuple[str]
     field_permissions = None  # type: Mapping[str, Union[bool, Tuple[str]]]
+    verb = "read"  # type: str
 
 
 class ScopedDjangoNode(DjangoObjectType):
@@ -46,6 +47,7 @@ class ScopedDjangoNode(DjangoObjectType):
         node_permissions=None,
         field_permissions=None,
         allow_anonymous=False,
+        verb="read",
         _meta=None,
         **options,
     ):
@@ -55,6 +57,7 @@ class ScopedDjangoNode(DjangoObjectType):
         _meta.allow_anonymous = allow_anonymous
         _meta.node_permissions = node_permissions
         _meta.field_permissions = field_permissions
+        _meta.verb = verb
         interfaces = options.get("interfaces", ()) + (Node,)
 
         # Great, the class is set up. Now let's add permission guards.
@@ -136,7 +139,7 @@ class ScopedDjangoNode(DjangoObjectType):
             if not isinstance(user, ScopedPermissionHolderMixin):
                 raise GraphQLError("You are not permitted to view this.")
 
-            if not obj.can_be_accessed_by(user):
+            if not obj.can_be_accessed_by(user, cls._meta.verb):
                 raise GraphQLError("You are not permitted to view this.")
 
         return super().get_node(info, id)
@@ -196,20 +199,20 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
         abstract = True
 
     @classmethod
-    def get_permissions(cls, root, info, input, id, obj) -> Iterable[str]:
+    def get_permissions(
+        cls, root, info, input, id, obj
+    ) -> Union[Iterable[str], ScopedPermissionGuard]:
         super_permissions = super().get_permissions(root, info, input, id, obj) or []
 
-        if hasattr(super_permissions, "__len__") and len(super_permissions) > 0:
+        if (
+            hasattr(super_permissions, "__len__")
+            and len(super_permissions) > 0
+            or isinstance(super_permissions, ScopedPermissionGuard)
+        ):
             return super_permissions
 
         # If we don't have explicit permissions we use some defaults here.
-        if cls._meta.verb == "":
-            return ["{required_scopes}"]
-        else:
-            return [
-                # Double curly brackets escapes them in an f-string
-                f"{{required_scopes}}:{cls._meta.verb}"
-            ]
+        return ScopedPermissionGuard(scope="{required_scopes}", verb=cls._meta.verb)
 
     @classmethod
     def check_permissions(cls, root, info, input, id, obj) -> None:
