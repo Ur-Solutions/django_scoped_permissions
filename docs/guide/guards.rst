@@ -57,7 +57,7 @@ The power of guards, however, is unleashed when we combine guards with boolean o
     guard_4 = guard_1 | ~guard_2
 
     # This guard requires you to have scope1:read and scope2 XOR (not scope1 and scope3)
-    guard_5 = (guard_1 and guard_2) ^ (ScopedPermissionGuard("scope1") and ScopedPermissionGuard("scope3"))
+    guard_5 = (guard_1 & guard_2) ^ (ScopedPermissionGuard("scope1") & ScopedPermissionGuard("scope3"))
 
     assert guard_4.has_permission(["scope1", "scope2"])
     assert guard_4.has_permission(["scope3"])
