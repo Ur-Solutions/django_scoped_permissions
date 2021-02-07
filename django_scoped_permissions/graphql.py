@@ -186,7 +186,7 @@ class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
             user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
         )
 
-        if not permission_guard.has_permission(granting_permissions):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
 
@@ -239,7 +239,7 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
         context["id"] = id
         context["obj"] = obj
 
-        if not permission_guard.has_permission(granting_permissions, context):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
     @classmethod
@@ -261,20 +261,20 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
         abstract = True
 
     @classmethod
-    def get_permissions(cls, root, info, input, id, obj) -> Iterable[str]:
+    def get_permissions(
+        cls, root, info, input, id, obj
+    ) -> Union[Iterable[str], ScopedPermissionGuard]:
         super_permissions = super().get_permissions(root, info, input, id, obj) or []
 
-        if hasattr(super_permissions, "__len__") and len(super_permissions) > 0:
+        if (
+            hasattr(super_permissions, "__len__")
+            and len(super_permissions) > 0
+            or isinstance(super_permissions, ScopedPermissionGuard)
+        ):
             return super_permissions
 
         # If we don't have explicit permissions we use some defaults here.
-        if cls._meta.verb == "":
-            return ["{required_scopes}"]
-        else:
-            return [
-                # Double curly brackets escapes them
-                f"{{required_scopes}}:{cls._meta.verb}"
-            ]
+        return ScopedPermissionGuard(scope="{required_scopes}", verb=cls._meta.verb)
 
     @classmethod
     def check_permissions(cls, root, info, input, id, obj) -> None:
@@ -301,7 +301,7 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
         context["id"] = id
         context["obj"] = obj
 
-        if not permission_guard.has_permission(granting_permissions, context):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
     @classmethod
@@ -323,20 +323,19 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
         abstract = True
 
     @classmethod
-    def get_permissions(cls, root, info, id, obj) -> Union[List[str], Tuple[str]]:
-        super_permissions = list(super().get_permissions(root, info, id, obj))
+    def get_permissions(
+        cls, root, info, id, obj
+    ) -> Union[Iterable[str], ScopedPermissionGuard]:
+        super_permissions = super().get_permissions(root, info, id, obj) or []
 
-        if hasattr(super_permissions, "__len__") and len(super_permissions) > 0:
+        if (
+            hasattr(super_permissions, "__len__")
+            and len(super_permissions) > 0
+            or isinstance(super_permissions, ScopedPermissionGuard)
+        ):
             return super_permissions
 
-        # If we don't have explicit permissions we use some defaults here.
-        if cls._meta.verb == "":
-            return ["{required_scopes}"]
-        else:
-            return [
-                # Double curly brackets escapes them
-                f"{{required_scopes}}:{cls._meta.verb}"
-            ]
+        return ScopedPermissionGuard(scope="{required_scopes}", verb=cls._meta.verb)
 
     @classmethod
     def check_permissions(cls, root, info, id, obj) -> None:
@@ -362,7 +361,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
         context["id"] = id
         context["obj"] = obj
 
-        if not permission_guard.has_permission(granting_permissions, context):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
     @classmethod
@@ -395,7 +394,7 @@ class ScopedDjangoBatchDeleteMutation(DjangoBatchDeleteMutation):
             user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
         )
 
-        if not permission_guard.has_permission(granting_permissions):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
 
@@ -419,5 +418,5 @@ class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
             user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
         )
 
-        if not permission_guard.has_permission(granting_permissions):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
