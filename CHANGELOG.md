@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.1.1
+* (graphql): Fix bad get_permission handling and add missing guard contexs
+
 ## Version 0.1.0
 
 * (core): Renamed action → verb
