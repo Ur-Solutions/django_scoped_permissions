@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.1.2
+* (guards): Fix bug when passing empty list to ScopedPermissionGuard
+
 ## Version 0.1.1
 * (graphql): Fix bad get_permission handling and add missing guard contexs
 
