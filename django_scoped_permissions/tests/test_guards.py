@@ -111,3 +111,9 @@ class TestScopedPermissionGuard(TestCase):
                 context={"var": ["scope2", "scope3"], "other": ["scope4"]},
             )
         )
+
+    def test__guard_with_empty_list__returns_always_false_guard(self):
+        guard = ScopedPermissionGuard([])
+        self.assertFalse(guard.has_permission("something"))
+        self.assertFalse(guard.has_permission("something:else"))
+        self.assertFalse(guard.has_permission("anything?"))

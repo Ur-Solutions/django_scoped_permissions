@@ -132,6 +132,9 @@ class ScopedPermissionGuard:
         elif isinstance(arg, (SPRBinOp, SPRUnOp)):
             return arg
         elif isinstance(arg, (tuple, list)):
+            if len(arg) == 0:
+                return SPRUnOp(False)
+
             base = self._get_overloaded_arg(arg[0])
 
             for arg in arg[1:]:
