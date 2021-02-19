@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.1.3
+* (core): Implement wildcards
+
 ## Version 0.1.2
 * (guards): Fix bug when passing empty list to ScopedPermissionGuard
 
