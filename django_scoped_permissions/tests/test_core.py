@@ -76,3 +76,43 @@ class TestScopeMatches(TestCase):
         self.assertFalse(
             scope_matches("organization:edit:user", "organization:ed")
         )
+
+    def test__wildcard_on_granting_scope__matches(self):
+        self.assertTrue(
+            scope_matches("user:1:edit", "*")
+        )
+        self.assertTrue(
+            scope_matches("organization:edit:user", "*")
+        )
+        self.assertTrue(
+            scope_matches("organization:edit:user", "organization:*")
+        )
+        self.assertTrue(
+            scope_matches("organization:edit:user", "organization:*:user")
+        )
+        self.assertTrue(
+            scope_matches("organization:edit:user", "*:edit:user")
+        )
+        self.assertTrue(
+            scope_matches("organization:edit:user", "organization:*:user")
+        )
+        self.assertFalse(
+            scope_matches("organization:edit:user", "organization:edit:user:*")
+        )
+        self.assertFalse(
+            scope_matches("organization:edit:user", "*:edit:user:*")
+        )
+
+    def test__wildcard_on_required__scope__matches(self):
+        self.assertTrue(
+            scope_matches("user:*:edit", "user:1:edit")
+        )
+        self.assertTrue(
+            scope_matches("organization:*:user", "organization:4:user")
+        )
+        self.assertTrue(
+            scope_matches("organization:*", "organization:clients")
+        )
+        self.assertFalse(
+            scope_matches("organization:*", "organization:clients:read")
+        )
