@@ -40,7 +40,7 @@ class ScopedPermissionGroup(models.Model):
         return self.name
 
 
-class ScopedPermissionHolderMixin(object):
+class ScopedPermissionHolderMixin:
     def get_granting_scopes(self):
         return []
 

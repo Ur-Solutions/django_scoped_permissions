@@ -148,7 +148,7 @@ def expand_scopes_with_verb_recursively(scopes: [str], verb: str):
     return result
 
 
-def scope_matches(required_scope: str, granting_scope: str):
+def scope_matches(required_permission: str, granting_permission: str):
     """
     Checks if two scopes match. They match if and only if the following is true:
         - All parts of required_scope are contained in scope, in the same order as supplied in required_scope.
@@ -166,20 +166,39 @@ def scope_matches(required_scope: str, granting_scope: str):
         required    = company:1:timesheets:create
         scope       = company:1
         OK
-    :param required_scope:
-    :param granting_scope:
+    :param required_permission:
+    :param granting_permission:
     :return:
     """
-    if granting_scope[0] == "=":
-        return required_scope == granting_scope[1:]
+    if granting_permission[0] == "=":
+        return required_permission == granting_permission[1:]
 
-    if granting_scope == required_scope:
+    if granting_permission == required_permission:
         return True
 
-    if required_scope.startswith(granting_scope):
-        # Ensure that the next character is a colon, i.e. that the granting scope
-        # fully matches some parent scope
-        return required_scope[len(granting_scope)] == ":"
+    # Optimisation, bail out when the wildcard is the only permission
+    if granting_permission == "*":
+        return True
+
+    required_scopes = required_permission.split(":")
+    granting_scopes = granting_permission.split(":")
+
+    # A more specified granting scope can never grant access.
+    # E.g.
+    #  granting = user:1:create
+    #  required = user:1
+    if len(granting_scopes) > len(required_scopes):
+        return False
+
+    if all(
+        granting_scope_part == "*"
+        or required_scope_part == "*"
+        or (granting_scope_part == required_scope_part)
+        for required_scope_part, granting_scope_part in zip(
+            required_scopes, granting_scopes
+        )
+    ):
+        return True
 
     return False
 
