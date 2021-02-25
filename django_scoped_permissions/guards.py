@@ -97,9 +97,10 @@ class ScopedPermissionGuard:
     The guard may contain a single permission requirement, or multiple.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, default=True, **kwargs):
         # Set a default to False
-        self.root = SPRUnOp(False)
+        self.default = default
+        self.root = SPRUnOp(self.default)
         self.__overload_args_kwargs(*args, **kwargs)
 
     def __overload_args_kwargs(self, *args, **kwargs):
@@ -133,7 +134,7 @@ class ScopedPermissionGuard:
             return arg
         elif isinstance(arg, (tuple, list)):
             if len(arg) == 0:
-                return SPRUnOp(False)
+                return SPRUnOp(self.default)
 
             base = self._get_overloaded_arg(arg[0])
 
@@ -142,7 +143,7 @@ class ScopedPermissionGuard:
 
             return base
         else:
-            return SPRUnOp(False)
+            return SPRUnOp(self.default)
 
     def has_permission(self, granting_scopes: Union[List[str], str], context=None):
         if isinstance(granting_scopes, str):

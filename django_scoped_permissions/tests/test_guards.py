@@ -112,8 +112,8 @@ class TestScopedPermissionGuard(TestCase):
             )
         )
 
-    def test__guard_with_empty_list__returns_always_false_guard(self):
+    def test__guard_with_empty_list__returns_always_true_guard(self):
         guard = ScopedPermissionGuard([])
-        self.assertFalse(guard.has_permission("something"))
-        self.assertFalse(guard.has_permission("something:else"))
-        self.assertFalse(guard.has_permission("anything?"))
+        self.assertTrue(guard.has_permission("something"))
+        self.assertTrue(guard.has_permission("something:else"))
+        self.assertTrue(guard.has_permission("anything?"))
