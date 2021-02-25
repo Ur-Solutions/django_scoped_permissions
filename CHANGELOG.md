@@ -1,6 +1,10 @@
 
 # Changelog
 
+## Version 0.1.4
+* (graphql): Add missing context variable in CreateMutation
+* (guards): Change default behaviour to be "True". Is now overrideable
+
 ## Version 0.1.3
 * (core): Implement wildcards
 
