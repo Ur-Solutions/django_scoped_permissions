@@ -162,7 +162,7 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
             user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
         )
 
-        if not permission_guard.has_permission(granting_permissions):
+        if not permission_guard.has_permission(granting_permissions, context=context):
             raise GraphQLError("You are not permitted to view this.")
 
 
