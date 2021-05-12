@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.1.5
+* (models): Fix a bug for Django 3.2 where the resolve methods would crash due to an output_field not being explicitly set on an annotation query.
+
 ## Version 0.1.4
 * (graphql): Add missing context variable in CreateMutation
 * (guards): Change default behaviour to be "True". Is now overrideable
