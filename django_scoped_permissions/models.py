@@ -86,6 +86,7 @@ class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
                 Case(When(exclude=True, then=Value("-")), default=Value("")),
                 Case(When(exact=True, then=Value("=")), default=Value("")),
                 F("scope"),
+                output_field=models.TextField(),
             )
         )
 
@@ -101,6 +102,7 @@ class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
                 Case(When(exclude=True, then=Value("-")), default=Value("")),
                 Case(When(exact=True, then=Value("=")), default=Value("")),
                 F("scope"),
+                output_field=models.TextField(),
             )
         )
 
