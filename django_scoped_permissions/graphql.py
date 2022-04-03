@@ -98,6 +98,15 @@ class ScopedDjangoNode(DjangoObjectType):
                     f"resolve_{field}",
                     create_resolver_from_scopes(field, [permissions]),
                 )
+            elif isinstance(permissions, ScopedPermissionGuard):
+                if hasattr(cls, f"resolve_{field}"):
+                    continue
+
+                setattr(
+                    cls,
+                    f"resolve_{field}",
+                    create_resolver_from_scopes(field, permissions),
+                )
             else:
                 raise ValueError(
                     f"Invalid field type {type(permissions)} given to ScopedDjangoNode for field {field}"
@@ -116,7 +125,8 @@ class ScopedDjangoNode(DjangoObjectType):
         )
 
         Model = cls._meta.model
-        obj = Model.objects.get(pk=id)
+        queryset = Model.objects.all()
+        obj = cls.get_queryset(queryset, info).get(pk=id)
 
         context = {
             "user": user,
