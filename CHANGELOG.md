@@ -1,6 +1,10 @@
 
 # Changelog
 
+## Version 0.1.6
+* (graphql): Fix a bug related to field permissions
+* Bump graphene-django get_queryset calls to use new signature
+
 ## Version 0.1.5
 * (models): Fix a bug for Django 3.2 where the resolve methods would crash due to an output_field not being explicitly set on an annotation query.
 

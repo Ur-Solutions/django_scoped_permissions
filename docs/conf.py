@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'django-scoped-permissions'
-copyright = '2020, Tormod Haugland'
+copyright = '2022, Tormod Haugland'
 author = 'Tormod Haugland'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.5'
+release = '0.1.6'
 
 # -- General configuration ---------------------------------------------------
 
