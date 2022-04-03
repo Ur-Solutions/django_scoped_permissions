@@ -1,7 +1,7 @@
 import itertools
 import re
-from typing import Mapping, Iterable
-
+from graphql import GraphQLError
+from typing import Mapping, Iterable, Union, List
 
 from django_scoped_permissions.models import ScopedModel
 
@@ -9,8 +9,6 @@ from pydash import get
 
 
 def create_resolver_from_method(field_name, method):
-    from graphql import GraphQLError
-
     def resolver(object, info, **args):
         if not method(object, info, **args):
             raise GraphQLError("You are not permitted to view this.")
@@ -20,17 +18,13 @@ def create_resolver_from_method(field_name, method):
     return resolver
 
 
-def create_resolver_from_scopes(field_name: str, permissions: [str]):
-    from graphql import GraphQLError
+def create_resolver_from_scopes(field_name: str, permissions: Union[List[str], "ScopedPermissionGuard"]):
     from django_scoped_permissions.guards import ScopedPermissionGuard
 
     permission_guard = ScopedPermissionGuard(permissions)
 
     def resolver(object, info, **args):
         user = info.context.user
-
-        final_scopes = []
-        format_variables = []
 
         field_value = getattr(object, field_name, None)
 
@@ -54,8 +48,8 @@ def create_resolver_from_scopes(field_name: str, permissions: [str]):
         context["field_scopes"] = object_base_scopes
 
         granting_permissions = (
-            user.get_granting_permissions()
-            if hasattr(user, "get_granting_permissions")
+            user.get_granting_scopes()
+            if hasattr(user, "get_granting_scopes")
             else []
         )
 
