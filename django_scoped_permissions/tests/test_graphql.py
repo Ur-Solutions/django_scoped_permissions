@@ -6,7 +6,9 @@ from graphql_relay import to_global_id
 
 from django_scoped_permissions.graphql import (
     ScopedDjangoNode,
-    ScopedDjangoCreateMutation, ScopedDjangoUpdateMutation, ScopedDjangoPatchMutation,
+    ScopedDjangoCreateMutation,
+    ScopedDjangoUpdateMutation,
+    ScopedDjangoPatchMutation,
 )
 from django_scoped_permissions.guards import ScopedPermissionGuard
 from django_scoped_permissions.tests.factories import UserFactory
@@ -271,7 +273,7 @@ class TestScopedCreateMutation(TestCase):
 
 class TestScopedUpdateMutation(TestCase):
     def test__default_permission__uses_object_required_scopes(
-            self,
+        self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -314,7 +316,7 @@ class TestScopedUpdateMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user),
         )
@@ -334,7 +336,7 @@ class TestScopedUpdateMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user_two),
         )
@@ -342,7 +344,7 @@ class TestScopedUpdateMutation(TestCase):
         self.assertIsNotNone(result.errors)
 
     def test__specific_permission__respects_permission(
-            self,
+        self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -387,7 +389,7 @@ class TestScopedUpdateMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user),
         )
@@ -407,7 +409,7 @@ class TestScopedUpdateMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user_two),
         )
@@ -417,7 +419,7 @@ class TestScopedUpdateMutation(TestCase):
 
 class TestScopedPatchMutation(TestCase):
     def test__default_permission__uses_object_required_scopes(
-            self,
+        self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -460,7 +462,7 @@ class TestScopedPatchMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user),
         )
@@ -480,7 +482,7 @@ class TestScopedPatchMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user_two),
         )
@@ -488,7 +490,7 @@ class TestScopedPatchMutation(TestCase):
         self.assertIsNotNone(result.errors)
 
     def test__specific_permission__respects_permission(
-            self,
+        self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -533,7 +535,7 @@ class TestScopedPatchMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user),
         )
@@ -553,9 +555,101 @@ class TestScopedPatchMutation(TestCase):
                     "firstName": "Tormod",
                     "lastName": "Haugland",
                     "email": "tormod.haugland@gmail.com",
-                }
+                },
             },
             context=Dict(user=user_two),
         )
 
+        self.assertIsNotNone(result.errors)
+
+
+class TestFieldPermissions(TestCase):
+    def test__field_has_scoped_permission_in_string_form__is_properly_guarded(
+        self,
+    ):
+        # This registers the UserNode type
+        # noinspection PyUnresolvedReferences
+        class UserNode(ScopedDjangoNode):
+            class Meta:
+                model = User
+                field_permissions = {"first_name": "user:first-name:read"}
+
+        class Query(graphene.ObjectType):
+            user = Node.Field(UserNode)
+
+        user = UserFactory.create(first_name="Tormod", last_name="Haugland")
+        user.add_or_create_permission("user:first-name:read")
+        user_two = UserFactory.create()
+
+        schema = Schema(query=Query)
+        query = """
+            query User($id: ID!){
+                user(id: $id){
+                    id
+                    firstName
+                } 
+            }
+        """
+
+        result = schema.execute(
+            query,
+            variables={"id": to_global_id("UserNode", user.id)},
+            context=Dict(user=user),
+        )
+        self.assertIsNone(result.errors)
+        data = Dict(result.data)
+        self.assertEqual("Tormod", data.user.firstName)
+
+        # User two does not have permission by default
+        result = schema.execute(
+            query,
+            variables={"id": to_global_id("UserNode", user.id)},
+            context=Dict(user=user_two),
+        )
+        self.assertIsNotNone(result.errors)
+
+    def test__field_has_scoped_permission_in_permission_guard_form__is_properly_guarded(
+        self,
+    ):
+        # This registers the UserNode type
+        # noinspection PyUnresolvedReferences
+        class UserNode(ScopedDjangoNode):
+            class Meta:
+                model = User
+                field_permissions = {
+                    "first_name": ScopedPermissionGuard("user:first-name", "read")
+                }
+
+        class Query(graphene.ObjectType):
+            user = Node.Field(UserNode)
+
+        user = UserFactory.create(first_name="Tormod", last_name="Haugland")
+        user.add_or_create_permission("user:first-name:read")
+        user_two = UserFactory.create()
+
+        schema = Schema(query=Query)
+        query = """
+            query User($id: ID!){
+                user(id: $id){
+                    id
+                    firstName
+                } 
+            }
+        """
+
+        result = schema.execute(
+            query,
+            variables={"id": to_global_id("UserNode", user.id)},
+            context=Dict(user=user),
+        )
+        self.assertIsNone(result.errors)
+        data = Dict(result.data)
+        self.assertEqual("Tormod", data.user.firstName)
+
+        # User two does not have permission by default
+        result = schema.execute(
+            query,
+            variables={"id": to_global_id("UserNode", user.id)},
+            context=Dict(user=user_two),
+        )
         self.assertIsNotNone(result.errors)
