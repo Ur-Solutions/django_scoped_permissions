@@ -14,7 +14,8 @@ setuptools.setup(
     url="https://github.com/Ur-Solutions/django_scoped_permissions",
     packages=setuptools.find_packages(),
     install_requires=[
-        "django>=2.0.0"
+        "django>=2.0.0",
+        "pydash>=4.0.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
