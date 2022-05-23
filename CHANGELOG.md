@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.1.7
+* Add pydash as peer dependency
+
 ## Version 0.1.6
 * (graphql): Fix a bug related to field permissions
 * Bump graphene-django get_queryset calls to use new signature
