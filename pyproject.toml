@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django_scoped_permissions"
-version = "0.1.6"
+version = "0.1.8"
 description = "Test scoped permissions"
 authors = ["Magnus Buvarp <magnus.buvarp@gmail.com>"]
 license = "MIT"

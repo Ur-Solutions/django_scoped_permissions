@@ -1,6 +1,9 @@
 
 # Changelog
 
+## Version 0.1.8
+* Add ScopedDjangoBatchPatchMutation, ScopedDjangoBatchUpdateMutation, ScopedDjangoFilterUpdateMutation cud wrappers
+
 ## Version 0.1.7
 * Add pydash as peer dependency
 
