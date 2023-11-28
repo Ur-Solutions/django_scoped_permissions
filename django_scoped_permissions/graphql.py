@@ -8,7 +8,7 @@ from graphene_django_cud.mutations import (
     DjangoDeleteMutation,
     DjangoBatchCreateMutation,
     DjangoBatchDeleteMutation,
-    DjangoFilterDeleteMutation,
+    DjangoFilterDeleteMutation, DjangoBatchPatchMutation, DjangoBatchUpdateMutation, DjangoFilterUpdateMutation,
 )
 from graphene_django_cud.mutations.create import DjangoCreateMutation
 from graphene_django_cud.mutations.delete import DjangoDeleteMutationOptions
@@ -262,6 +262,43 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
         return super().__init_subclass_with_meta__(_meta=_meta, **options)
 
 
+class ScopedDjangoBatchPatchMutationOptions(DjangoPatchMutationOptions):
+    verb = "update"  # type: str
+
+
+class ScopedDjangoBatchPatchMutation(DjangoBatchPatchMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def check_permissions(cls, root, info, input) -> None:
+        permissions = cls.get_permissions(root, info, input) or []
+
+        if not hasattr(permissions, "__len__") or len(permissions) == 0:
+            return
+
+        user = info.context.user
+
+        permission_guard = ScopedPermissionGuard(permissions)
+        context = {"context": info.context, "input": input, "user": info.context.user}
+
+        granting_permissions = (
+            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
+        )
+
+        if not permission_guard.has_permission(granting_permissions, context=context):
+            raise GraphQLError("You are not permitted to view this.")
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
+        if _meta is None:
+            _meta = ScopedDjangoBatchPatchMutationOptions(cls)
+
+        _meta.verb = verb
+
+        return super().__init_subclass_with_meta__(_meta=_meta, **options)
+
+
 class ScopedDjangoUpdateMutationOptions(DjangoUpdateMutationOptions):
     verb = "update"  # type: str
 
@@ -318,6 +355,80 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
     def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
         if _meta is None:
             _meta = ScopedDjangoUpdateMutationOptions(cls)
+
+        _meta.verb = verb
+
+        return super().__init_subclass_with_meta__(_meta=_meta, **options)
+
+
+class ScopedDjangoBatchUpdateMutationOptions(DjangoUpdateMutationOptions):
+    verb = "update"  # type: str
+
+
+class ScopedDjangoBatchUpdateMutation(DjangoBatchUpdateMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def check_permissions(cls, root, info, input) -> None:
+        permissions = cls.get_permissions(root, info, input) or []
+
+        if not hasattr(permissions, "__len__") or len(permissions) == 0:
+            return
+
+        user = info.context.user
+
+        permission_guard = ScopedPermissionGuard(permissions)
+        context = {"context": info.context, "input": input, "user": info.context.user}
+
+        granting_permissions = (
+            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
+        )
+
+        if not permission_guard.has_permission(granting_permissions, context=context):
+            raise GraphQLError("You are not permitted to view this.")
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
+        if _meta is None:
+            _meta = ScopedDjangoBatchUpdateMutationOptions(cls)
+
+        _meta.verb = verb
+
+        return super().__init_subclass_with_meta__(_meta=_meta, **options)
+
+
+class ScopedDjangoFilterUpdateMutationOptions(DjangoUpdateMutationOptions):
+    verb = "update"  # type: str
+
+
+class ScopedDjangoFilterUpdateMutation(DjangoFilterUpdateMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def check_permissions(cls, root, info, input) -> None:
+        permissions = cls.get_permissions(root, info, input) or []
+
+        if not hasattr(permissions, "__len__") or len(permissions) == 0:
+            return
+
+        user = info.context.user
+
+        permission_guard = ScopedPermissionGuard(permissions)
+        context = {"context": info.context, "input": input, "user": info.context.user}
+
+        granting_permissions = (
+            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
+        )
+
+        if not permission_guard.has_permission(granting_permissions, context=context):
+            raise GraphQLError("You are not permitted to view this.")
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
+        if _meta is None:
+            _meta = ScopedDjangoFilterUpdateMutationOptions(cls)
 
         _meta.verb = verb
 
