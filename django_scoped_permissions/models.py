@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import Value, F, Case, When
 from django.db.models.functions import Concat
 
-from django_scoped_permissions.core import any_scope_matches, scopes_grant_permissions
+from django_scoped_permissions.core.core import any_scope_matches, scopes_grant_permissions
 
 
 class ScopedPermission(models.Model):

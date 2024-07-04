@@ -1,29 +1,31 @@
-import factory
+from factory import Faker, Sequence, SubFactory
+from factory.django import DjangoModelFactory
+from faker import factory
 
 from django_scoped_permissions.tests.models import User, Pet, Company
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
 
-    first_name = factory.Faker("first_name")
-    last_name = factory.Faker("last_name")
-    username = factory.Sequence(lambda n: "username%d" % n)
-    email = factory.Sequence(lambda n: "user-%d@ursolutions.no" % n)
+    first_name = Faker("first_name")
+    last_name = Faker("last_name")
+    username = Sequence(lambda n: "username%d" % n)
+    email = Sequence(lambda n: "user-%d@ursolutions.no" % n)
 
 
-class PetFactory(factory.DjangoModelFactory):
+class PetFactory(DjangoModelFactory):
     class Meta:
         model = Pet
 
-    user = factory.SubFactory(UserFactory)
+    user = SubFactory(UserFactory)
     name = "Pet"
     age = 10
 
 
-class CompanyFactory(factory.DjangoModelFactory):
+class CompanyFactory(DjangoModelFactory):
     class Meta:
         model = Company
 
-    short_name = factory.Sequence(lambda n: "company%d" % n)
+    short_name = Sequence(lambda n: "company%d" % n)
