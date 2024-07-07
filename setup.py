@@ -15,7 +15,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "django>=2.0.0",
-        "pydash>=4.0.0"
+        "pydash>=4.0.0",
+        "lark>=1.0.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

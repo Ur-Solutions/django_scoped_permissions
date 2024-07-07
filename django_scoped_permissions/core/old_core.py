@@ -1,6 +1,8 @@
 from typing import Any, Union, Optional
+
 from django.db.models import Model
 from django.db.models.base import ModelBase
+from typing_extensions import deprecated
 
 
 def scope_grants_permission(
@@ -213,6 +215,7 @@ def get_scope_arg_str(arg: Union[str, Model, ModelBase]):
     return str(arg)
 
 
+@deprecated("Use `ScopedPermission.from_string` or `sp` instead.")
 def create_scope(*args: [Any]):
     """
     Converts a list of scopes into a scope-string.

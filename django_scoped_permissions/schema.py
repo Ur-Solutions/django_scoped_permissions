@@ -2,17 +2,17 @@ import graphene
 from graphene import Node
 from graphene_django import DjangoObjectType, DjangoConnectionField
 
-from django_scoped_permissions.models import ScopedPermission
+from django_scoped_permissions.models import StoredScopedPermission
 
 
 class ScopedPermissionNode(DjangoObjectType):
     class Meta:
-        model = ScopedPermission
+        model = StoredScopedPermission
         interfaces = (Node,)
 
     @classmethod
     def get_node(self, info, id):
-        return ScopedPermission.objects.get(pk=id)
+        return StoredScopedPermission.objects.get(pk=id)
 
 
 class ScopedPermissionQuery(graphene.ObjectType):
@@ -20,4 +20,4 @@ class ScopedPermissionQuery(graphene.ObjectType):
     all_scoped_permissions = DjangoConnectionField(ScopedPermissionNode)
 
     def resolve_all_scoped_permissions(self, info, *args, **kwargs):
-        return ScopedPermission.objects.all()
+        return StoredScopedPermission.objects.all()

@@ -1,21 +1,11 @@
 from typing import Optional, List, Union
 
 from django_scoped_permissions.core import scopes_grant_permissions
+from django_scoped_permissions.core.scoped_permission import ScopedPermission
 from django_scoped_permissions.util import expand_scopes_from_context
 
 
-class ScopedPermissionRequirement:
-    """
-    ScopedPermissionRequirement describes a single permission requirement. A ScopedPermissionGuard
-    holds one or more such requirements to describe a complex permission guard.
-    """
-
-    def __init__(self, scope: str, verb: Optional[str] = None):
-        self.scope = scope
-        self.verb = verb
-
-
-def _evaluate_value(value, granting_scopes: List[str], context=None):
+def _evaluate_value(value, granting_scopes: List[Union[str, ScopedPermission]], context=None):
     if not context:
         context = {}
 
@@ -29,7 +19,7 @@ def _evaluate_value(value, granting_scopes: List[str], context=None):
     elif isinstance(value, list):
         required_scopes = expand_scopes_from_context(value, context)
         return scopes_grant_permissions(required_scopes, granting_scopes)
-    elif isinstance(value, ScopedPermissionRequirement):
+    elif isinstance(value, ScopedPermission):
         required_scopes = expand_scopes_from_context([value.scope], context)
         return scopes_grant_permissions(required_scopes, granting_scopes, value.verb)
     elif isinstance(value, bool):
@@ -107,14 +97,14 @@ class ScopedPermissionGuard:
         if "scope" in kwargs:
             scope = kwargs["scope"]
             verb = kwargs.get("verb", None)
-            self.root = SPRUnOp(ScopedPermissionRequirement(scope, verb))
+            self.root = SPRUnOp(ScopedPermission(scope, verb))
         elif len(args) == 1:
             if "verb" in kwargs and isinstance(args[0], str):
-                self.root = SPRUnOp(ScopedPermissionRequirement(args[0], args[1]))
+                self.root = SPRUnOp(ScopedPermission(args[0], args[1]))
             else:
                 self.root = self._get_overloaded_arg(args[0])
         elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            self.root = SPRUnOp(ScopedPermissionRequirement(args[0], args[1]))
+            self.root = SPRUnOp(ScopedPermission(args[0], args[1]))
         else:
             self.root = self._get_overloaded_arg(args[0])
 
@@ -123,10 +113,10 @@ class ScopedPermissionGuard:
 
     def _get_overloaded_arg(self, arg):
         if isinstance(arg, str):
-            return SPRUnOp(ScopedPermissionRequirement(arg))
+            return SPRUnOp(ScopedPermission(arg))
         elif isinstance(arg, (tuple, list)) and len(arg) == 2:
-            return SPRUnOp(ScopedPermissionRequirement(arg[0], arg[1]))
-        elif isinstance(arg, ScopedPermissionRequirement):
+            return SPRUnOp(ScopedPermission(arg[0], arg[1]))
+        elif isinstance(arg, ScopedPermission):
             return SPRUnOp(arg)
         elif isinstance(arg, ScopedPermissionGuard):
             return arg.root

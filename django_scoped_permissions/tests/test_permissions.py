@@ -8,7 +8,7 @@ from django_scoped_permissions.tests.factories import UserFactory
 from django_scoped_permissions.decorators import (
     gql_has_scoped_permissions,
 )
-from django_scoped_permissions.models import ScopedPermission
+from django_scoped_permissions.models import StoredScopedPermission
 from django_scoped_permissions.tests.factories import PetFactory
 
 
@@ -76,10 +76,10 @@ class TestHasScopedPermissionsMixin(TestCase):
     def test_get_scopes__simple_scopes__returns_array(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope")
+            StoredScopedPermission.objects.create(scope="simple:scope")
         )
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope:deep")
+            StoredScopedPermission.objects.create(scope="simple:scope:deep")
         )
 
         # Users automatically get the user:1 scope
@@ -90,10 +90,10 @@ class TestHasScopedPermissionsMixin(TestCase):
     def test_get_scopes__exclude_scopes__appends_minus_signs(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope", exclude=True)
+            StoredScopedPermission.objects.create(scope="simple:scope", exclude=True)
         )
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope:deep", exclude=True)
+            StoredScopedPermission.objects.create(scope="simple:scope:deep", exclude=True)
         )
 
         # Users automatically get the user:1 scope
@@ -105,10 +105,10 @@ class TestHasScopedPermissionsMixin(TestCase):
     def test_get_scopes__exact_scopes__appends_equal_sign(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope", exact=True)
+            StoredScopedPermission.objects.create(scope="simple:scope", exact=True)
         )
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope:deep", exact=True)
+            StoredScopedPermission.objects.create(scope="simple:scope:deep", exact=True)
         )
 
         # Users automatically get the user:1 scope
@@ -120,12 +120,12 @@ class TestHasScopedPermissionsMixin(TestCase):
     def test_get_scopes__exact_and_negation_scopes__appends_equal_and_minus_sign(self):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(
+            StoredScopedPermission.objects.create(
                 scope="simple:scope", exclude=True, exact=True
             )
         )
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(
+            StoredScopedPermission.objects.create(
                 scope="simple:scope:deep", exclude=True, exact=True
             )
         )
@@ -143,7 +143,7 @@ class TestScopedModelMixin(TestCase):
     ):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(
+            StoredScopedPermission.objects.create(
                 scope="user:1", exclude=True, exact=True
             )
         )
@@ -156,7 +156,7 @@ class TestScopedModelMixin(TestCase):
     ):
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="user", exclude=True, exact=True)
+            StoredScopedPermission.objects.create(scope="user", exclude=True, exact=True)
         )
 
         pet = PetFactory.create(user=user)
@@ -171,7 +171,7 @@ class TestGqlHasScopedPermissions(TestCase):
 
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope")
+            StoredScopedPermission.objects.create(scope="simple:scope")
         )
 
         info = Dict(context=Dict(user=user))
@@ -186,7 +186,7 @@ class TestGqlHasScopedPermissions(TestCase):
 
         user = UserFactory.create()
         user.scoped_permissions.add(
-            ScopedPermission.objects.create(scope="simple:scope:nested")
+            StoredScopedPermission.objects.create(scope="simple:scope:nested")
         )
 
         info = Dict(context=Dict(user=user))

@@ -1,19 +1,14 @@
 from django.contrib import admin
 
-from django_scoped_permissions.models import ScopedPermission, ScopedPermissionGroup
+from django_scoped_permissions.models import StoredScopedPermission
 
 
-@admin.register(ScopedPermission)
-class ScopedPermissionAdmin(admin.ModelAdmin):
+@admin.register(StoredScopedPermission)
+class StoredScopedPermissionAdmin(admin.ModelAdmin):
     list_display = (
         "__str__",
-        "exact",
-        "exclude",
+        "scope",
+        "verb",
+        "is_exact",
+        "is_negation",
     )
-
-
-@admin.register(ScopedPermissionGroup)
-class ScopedPermissionGroupAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-
-    filter_horizontal = ("scoped_permissions",)
