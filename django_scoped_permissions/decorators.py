@@ -3,7 +3,7 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from typing_extensions import deprecated
 
-from django_scoped_permissions.core.scoped_permission import sp
+from django_scoped_permissions.core.scoped_permission import sp, ScopedPermission
 from django_scoped_permissions.guards import ScopedPermissionGuard
 
 
@@ -19,8 +19,7 @@ def protect_view(
 
     resolve_context = kwargs.pop("resolve_context", None)
 
-    # Create a dummy permission when fn is supplied, just so the sp constructor doesn't fail
-    permission = sp(*args, **kwargs) if fn is None else sp("1")
+    permission = ScopedPermission.safe_create(*args, **kwargs, default=sp("*"))
 
     def decorator(func):
         @wraps(func)
@@ -113,60 +112,7 @@ def protect_field(
     return decorator
 
 
-def protect_mutation(
-        *args,
-        fail_message: str = "You are not permitted to view this",
-        **kwargs,
-):
-    fn = kwargs.pop("fn", None)
-
-    if fn and not callable(fn):
-        raise ValueError("fn must be a callable")
-
-    resolve_context = kwargs.pop("resolve_context", None)
-
-    # Create a dummy permission when fn is supplied, just so the sp constructor doesn't fail
-    permission = sp(*args, **kwargs) if fn is None else sp("1")
-
-    def decorator(mutation_class):
-
-        # We wrap the "mutate" method in the class with the permission guard
-        mutate = getattr(mutation_class, "mutate", None)
-
-        if not mutate:
-            raise ValueError(f"The wrapped class {mutation_class} must have a mutate method")
-
-        @wraps(mutate)
-        def wrapper(cls, info, *args, **kwargs):
-            if not hasattr(info, "context") or not hasattr(info.context, "user"):
-                raise PermissionDenied(fail_message)
-
-            user = info.context.user
-            if not user or user.is_anonymous:
-                raise PermissionDenied(fail_message)
-
-            context = {}
-            context["context"] = info.context
-            context["user"] = info.context.user
-
-            if resolve_context and callable(resolve_context):
-                result = resolve_context(info, *args, **kwargs)
-
-                if isinstance(result, dict):
-                    context.update(result)
-
-            if not permission.apply_context(context).check_access(user.get_granting_scopes()):
-                raise PermissionDenied(fail_message)
-
-            return mutate(cls, info, *args, **kwargs)
-
-        mutation_class.mutate = wrapper
-
-        return mutation_class
-
-    return decorator
-
-@deprecated("Use `protect_field`, `protect_mutation` or `protect_django_object_type` instead")
+@deprecated("Use `protect_field`")
 def gql_has_scoped_permissions(
         *args,
         fail_message: str = "You are not permitted to view this",

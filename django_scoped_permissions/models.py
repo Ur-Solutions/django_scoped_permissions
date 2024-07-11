@@ -1,8 +1,12 @@
-from typing import Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from django.db import models
+from typing_extensions import deprecated
 
-from django_scoped_permissions.core.old_core import any_scope_matches, scopes_grant_permissions
+from django_scoped_permissions.core.check_scoped_permission import overload_scoped_permission_like
+
+if TYPE_CHECKING:
+    from django_scoped_permissions.core.scoped_permission import ScopedPermissionLike
 
 
 class StoredScopedPermission(models.Model):
@@ -38,36 +42,21 @@ class StoredScopedPermission(models.Model):
         return permission
 
 
-class ScopedPermissionHolderMixin:
+class ScopedPermissionProviderMixin:
+
+    @deprecated("Use `get_granting_permissions` instead")
     def get_granting_scopes(self):
+        return self.get_granting_permissions()
+
+    def get_granting_permissions(self):
         return []
 
-    def has_scoped_permissions(self, *required_scopes):
-        return self.has_any_scoped_permissions(*required_scopes)
 
-    def has_any_scoped_permissions(self, *required_scopes):
-        scopes = self.get_granting_scopes()
-
-        return scopes_grant_permissions(required_scopes, scopes)
-
-    def has_all_scoped_permissions(self, *required_scopes):
-        scopes = self.get_granting_scopes()
-
-        for scope in required_scopes:
-            if not any_scope_matches([scope], scopes):
-                return False
-
-        return True
-
-    def has_access_to(self, model: "ScopedModelMixin", verb: Optional[str] = None):
-
-        granting_scopes = self.get_granting_scopes()
-        required_scopes = model.get_required_scopes()
-
-        return scopes_grant_permissions(required_scopes, granting_scopes, verb)
+class StatelessScopedPermissionProvider(ScopedPermissionProviderMixin):
+    pass
 
 
-class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
+class ScopedPermissionProvider(models.Model, ScopedPermissionProviderMixin):
     class Meta:
         abstract = True
 
@@ -83,34 +72,14 @@ class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
             for scope in scopes
         ]
 
-    def get_scopes(self):
+    def get_granting_permissions(self):
         """
         DEPRECATED: Use `get_granting_scopes` instead
         """
         return self.resolved_scopes
 
-    def get_granting_scopes(self):
-        return self.resolved_scopes
-
-    def has_scoped_permissions(self, *required_scopes):
-        return self.has_any_scoped_permissions(*required_scopes)
-
-    def has_any_scoped_permissions(self, *required_scopes):
-        scopes = self.get_granting_scopes()
-
-        return scopes_grant_permissions(required_scopes, scopes)
-
-    def has_all_scoped_permissions(self, *required_scopes):
-        scopes = self.get_granting_scopes()
-
-        for scope in required_scopes:
-            if not any_scope_matches([scope], scopes):
-                return False
-
-        return True
-
     def add_or_create_permission(
-            self, scoped_permission: str, is_exact=False, is_negation=False
+            self, scoped_permission: "ScopedPermissionLike"
     ):
         from django_scoped_permissions.core.scoped_permission import sp
         """
@@ -138,37 +107,34 @@ class ScopedPermissionHolder(models.Model, ScopedPermissionHolderMixin):
         self.scoped_permissions.add(scope)
 
 
-# DEPRECATED: Use ScopedPermissionHolder
-HasScopedPermissionMixin = ScopedPermissionHolder
+class ProtectedModelMixin:
 
-
-class ScopedModelMixin:
-    def get_base_scopes(self):
-        """
-        DEPRECATED: Use `get_required_scopes`
-        """
-        return self.get_required_scopes()
-
+    @deprecated("Use `get_required_permissions` instead")
     def get_required_scopes(self):
+        return self.get_required_permissions()
+
+    def get_required_permissions(self):
         return []
 
-    def can_be_accessed_by(
-            self, holder: ScopedPermissionHolderMixin, verb: Optional[str] = None
-    ):
-        user_scopes = holder.get_granting_scopes()
-        required_scopes = self.get_required_scopes()
+    def check_access(self, permissions: "ScopedPermissionLike" | List["ScopedPermissionLike"]):
+        required_permissions = self.get_required_permissions()
 
-        return scopes_grant_permissions(required_scopes, user_scopes, verb)
+        required_scopes = [overload_scoped_permission_like(permission) for permission in required_permissions]
 
-    def has_permission(
-            self, user: ScopedPermissionHolderMixin, verb: Optional[str] = None
-    ):
-        """
-        DEPRECATED: Use `can_be_accessed_by`.
-        """
-        return self.can_be_accessed_by(user, verb)
+        for required_scope in required_scopes:
+            if not required_scope.check_access(permissions):
+                return False
+
+        return True
 
 
-class ScopedModel(models.Model, ScopedModelMixin):
+class ProtectedModel(models.Model, ProtectedModelMixin):
     class Meta:
         abstract = True
+
+
+# DEPRECATED: Use ScopedPermissionProvider
+ScopedPermissionHolder = ScopedPermissionProvider
+
+# DEPRECATED: Use ProtectedModel
+ScopedModel = ProtectedModel

@@ -1,6 +1,8 @@
 from typing import Optional, List
 import re
 
+from django.conf import settings
+
 from django_scoped_permissions.core.check_scoped_permission import overload_scoped_permission_like
 from django_scoped_permissions.core.comparison import check_scopes_grant_access
 from django_scoped_permissions.core.tree import ScopedPermissionTree
@@ -10,7 +12,7 @@ from django_scoped_permissions.models import StoredScopedPermission
 VALID_SCOPE_CHARACTERS = re.compile(r"[a-zA-Z0-9_\-:{}]+")
 VALID_VERB_CHARACTERS = re.compile(r"[a-zA-Z0-9_\-{}]+")
 
-type ScopedPermissionLike = str | ScopedPermission
+type ScopedPermissionLike = str | ScopedPermission | ScopedPermissionTree
 
 
 class ScopedPermission:
@@ -58,16 +60,30 @@ class ScopedPermission:
         return ScopedPermission(scope, verb, is_negation, is_exact)
 
     @staticmethod
+    def safe_create(*args, default: Optional["ScopedPermission"] = None, **kwargs):
+        default = kwargs.pop("default", False)
+
+        try:
+            return ScopedPermission.create(*args, **kwargs)
+        except ValueError:
+            if default:
+                return default
+            else:
+                return None
+
+    @staticmethod
     def from_model(model: StoredScopedPermission):
         return ScopedPermission(model.scope, model.verb, model.is_negation, model.is_exact)
 
-    def __init__(self, scope: str, verb: Optional[str] = None, is_negation: bool = False, is_exact: bool = False):
+    def __init__(self, scope: str, verb: Optional[str] = None, is_negation: bool = False, is_exact: bool = False,
+                 validate: bool = getattr(settings, "DJANGO_SCOPED_PERMISSIONS_STRICT_MODE", False)):
         self.scope = scope
         self.verb = verb
         self.is_negation = is_negation
         self.is_exact = is_exact
 
-        self.validate()
+        if validate:
+            self.validate()
 
     def validate(self):
         """

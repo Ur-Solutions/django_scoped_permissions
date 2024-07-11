@@ -134,8 +134,8 @@ class Migration(migrations.Migration):
             ],
             bases=(
                 models.Model,
-                django_scoped_permissions.models.ScopedPermissionHolderMixin,
-                django_scoped_permissions.models.ScopedModelMixin,
+                django_scoped_permissions.models.ScopedPermissionProviderMixin,
+                django_scoped_permissions.models.ProtectedModelMixin,
             ),
             managers=[
                 ("objects", django.contrib.auth.models.UserManager()),
@@ -189,7 +189,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            bases=(django_scoped_permissions.models.ScopedModelMixin, models.Model),
+            bases=(django_scoped_permissions.models.ProtectedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name="UserType",
@@ -233,9 +233,9 @@ class Migration(migrations.Migration):
                 ),
             ],
             bases=(
-                django_scoped_permissions.models.ScopedModelMixin,
+                django_scoped_permissions.models.ProtectedModelMixin,
                 models.Model,
-                django_scoped_permissions.models.ScopedPermissionHolderMixin,
+                django_scoped_permissions.models.ScopedPermissionProviderMixin,
             ),
         ),
         migrations.AddIndex(

@@ -21,8 +21,8 @@ from graphql import GraphQLError
 
 from django_scoped_permissions.guards import ScopedPermissionGuard
 from django_scoped_permissions.models import (
-    ScopedModelMixin,
-    ScopedPermissionHolderMixin,
+    ProtectedModelMixin,
+    ScopedPermissionProviderMixin,
 )
 from django_scoped_permissions.util import (
     create_resolver_from_method,
@@ -116,7 +116,7 @@ class ScopedDjangoNode(DjangoObjectType):
     def get_node(cls, info, id):
         user = info.context.user
         if not cls._meta.allow_anonymous and not isinstance(
-            user, ScopedPermissionHolderMixin
+            user, ScopedPermissionProviderMixin
         ):
             raise GraphQLError("You are not permitted to view this.")
 
@@ -135,9 +135,9 @@ class ScopedDjangoNode(DjangoObjectType):
             "obj": obj,
         }
 
-        if isinstance(obj, ScopedModelMixin):
+        if isinstance(obj, ProtectedModelMixin):
             context["base_scopes"] = obj.get_base_scopes()
-            context["required_scopes"] = obj.get_required_scopes()
+            context["required_scopes"] = obj.get_required_permissions()
 
         # If we have explicit permission, we check against the guard
         if cls._meta.node_permissions:
@@ -145,8 +145,8 @@ class ScopedDjangoNode(DjangoObjectType):
                 granting_permissions, context
             ):
                 raise GraphQLError("You are not permitted to view this.")
-        elif isinstance(obj, ScopedModelMixin):
-            if not isinstance(user, ScopedPermissionHolderMixin):
+        elif isinstance(obj, ProtectedModelMixin):
+            if not isinstance(user, ScopedPermissionProviderMixin):
                 raise GraphQLError("You are not permitted to view this.")
 
             if not obj.can_be_accessed_by(user, cls._meta.verb):
@@ -236,7 +236,7 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
         permission_guard = ScopedPermissionGuard(permissions)
         context = {}
 
-        if isinstance(obj, ScopedModelMixin):
+        if isinstance(obj, ProtectedModelMixin):
             context["base_scopes"] = obj.get_base_scopes()
             context["required_scopes"] = obj.get_required_scopes()
 
@@ -335,7 +335,7 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
         permission_guard = ScopedPermissionGuard(permissions)
         context = {}
 
-        if isinstance(obj, ScopedModelMixin):
+        if isinstance(obj, ProtectedModelMixin):
             context["base_scopes"] = obj.get_base_scopes()
             context["required_scopes"] = obj.get_required_scopes()
 
@@ -470,7 +470,7 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
         permission_guard = ScopedPermissionGuard(permissions)
         context = {}
 
-        if isinstance(obj, ScopedModelMixin):
+        if isinstance(obj, ProtectedModelMixin):
             context["base_scopes"] = obj.get_base_scopes()
             context["required_scopes"] = obj.get_required_scopes()
 

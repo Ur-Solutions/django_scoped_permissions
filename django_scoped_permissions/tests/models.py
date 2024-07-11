@@ -3,13 +3,13 @@ from django.db import models
 
 from django_scoped_permissions.core import create_scope
 from django_scoped_permissions.models import (
-    ScopedPermissionHolder,
-    ScopedModelMixin,
+    ScopedPermissionProvider,
+    ProtectedModelMixin,
     ScopedModel,
 )
 
 
-class User(AbstractUser, ScopedPermissionHolder, ScopedModel):
+class User(AbstractUser, ScopedPermissionProvider, ScopedModel):
     class Meta:
         indexes = (models.Index(fields=("email",)),)
 
@@ -61,7 +61,7 @@ class Company(models.Model):
         return self.name
 
 
-class UserType(ScopedPermissionHolder, ScopedModelMixin, models.Model):
+class UserType(ScopedPermissionProvider, ProtectedModelMixin, models.Model):
     class Meta:
         pass
 
@@ -91,7 +91,7 @@ class UserType(ScopedPermissionHolder, ScopedModelMixin, models.Model):
         return f"{self.name} ({self.company.name})"
 
 
-class Pet(ScopedModelMixin, models.Model):
+class Pet(ProtectedModelMixin, models.Model):
     class Meta:
         pass
 
