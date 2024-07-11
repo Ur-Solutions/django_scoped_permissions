@@ -32,6 +32,7 @@ def protect_view(
                 raise PermissionDenied(fail_message)
 
             context = {}
+            context["request"] = request
             context["context"] = request
             context["user"] = request.user
 
@@ -49,7 +50,7 @@ def protect_view(
                 if isinstance(result, dict):
                     context.update(result)
 
-            if not permission.apply_context(context).check_access(user.get_granting_scopes()):
+            if not permission.apply_context(context).check_access(user.get_granting_permissions(context)):
                 raise PermissionDenied(fail_message)
 
             return func(request, *args, **kwargs)
@@ -93,6 +94,7 @@ def protect_field(
                 return func(cls, info, *args, **kwargs)
 
             context = {}
+            context["request"] = info.context
             context["context"] = info.context
             context["user"] = info.context.user
 

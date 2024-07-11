@@ -48,7 +48,7 @@ class ScopedPermissionProviderMixin:
     def get_granting_scopes(self):
         return self.get_granting_permissions()
 
-    def get_granting_permissions(self):
+    def get_granting_permissions(self, context=None):
         return []
 
 
@@ -72,10 +72,7 @@ class ScopedPermissionProvider(models.Model, ScopedPermissionProviderMixin):
             for scope in scopes
         ]
 
-    def get_granting_permissions(self):
-        """
-        DEPRECATED: Use `get_granting_scopes` instead
-        """
+    def get_granting_permissions(self, context=None):
         return self.resolved_scopes
 
     def add_or_create_permission(
@@ -113,7 +110,7 @@ class ProtectedModelMixin:
     def get_required_scopes(self):
         return self.get_required_permissions()
 
-    def get_required_permissions(self):
+    def get_required_permissions(self, context=None):
         return []
 
     def check_access(self, permissions: "ScopedPermissionLike" | List["ScopedPermissionLike"]):
