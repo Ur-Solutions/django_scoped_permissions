@@ -47,7 +47,7 @@ class ScopedPermission:
                 scope, verb = scope.split("@")
 
         elif scope == "" and len(args) > 0:
-            scope = ":".join(args)
+            scope = ":".join([str(arg) for arg in args])
 
         if scope.startswith("-"):
             is_negation = True
@@ -57,7 +57,7 @@ class ScopedPermission:
             is_exact = True
             scope = scope[1:]
 
-        return ScopedPermission(scope, verb, is_negation, is_exact)
+        return ScopedPermission(str(scope), str(verb), is_negation, is_exact)
 
     @staticmethod
     def safe_create(*args, default: Optional["ScopedPermission"] = None, **kwargs):
@@ -170,6 +170,9 @@ class ScopedPermission:
             result += f"@{self.verb}"
 
         return result
+
+    def __hash__(self):
+        return hash((self.scope, self.verb, self.is_negation, self.is_exact))
 
     def __eq__(self, other):
         if isinstance(other, ScopedPermission):
