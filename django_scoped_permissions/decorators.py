@@ -2,12 +2,20 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 from graphene_django_cud.util import disambiguate_id
+from graphql.type.definition import GraphQLResolveInfo
 from pydash import omit
 from typing_extensions import deprecated
 
 from django_scoped_permissions.core.scoped_permission import sp, ScopedPermission
 from django_scoped_permissions.guards import ScopedPermissionGuard
 
+
+def _get_info_from_args(args):
+    for arg in args:
+        if isinstance(arg, GraphQLResolveInfo):
+            return arg
+
+    return None
 
 def _default_context_resolver(request, resolve_info, *args, **kwargs):
     context = {
@@ -91,7 +99,10 @@ def protect_field(
 
     def decorator(func):
         @wraps(func)
-        def wrapper(cls, info, *args, **kwargs):
+        def wrapper(cls_or_self, *args, **kwargs):
+
+            info = _get_info_from_args(args)
+
             if not hasattr(info, "context") or not hasattr(info.context, "user"):
                 raise PermissionDenied(fail_message)
 
@@ -105,7 +116,7 @@ def protect_field(
                 if result is False:
                     raise PermissionDenied(fail_message)
 
-                return func(cls, info, *args, **kwargs)
+                return func(cls_or_self, info, *args, **kwargs)
 
             context = _default_context_resolver(info.context, info, *args, **kwargs)
 
@@ -118,7 +129,7 @@ def protect_field(
             if not permission.apply_context(context).check_access(user.get_granting_scopes()):
                 raise PermissionDenied(fail_message)
 
-            return func(cls, info, *args, **kwargs)
+            return func(cls_or_self, info, *args, **kwargs)
 
         return wrapper
 
