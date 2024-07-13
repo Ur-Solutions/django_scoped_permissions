@@ -11,13 +11,28 @@ from django_scoped_permissions.guards import ScopedPermissionGuard
 
 
 def _get_info_from_args(args):
+    """
+    When resolving the "info" argument, we might need
+    to look in more than one place, as whether or not the
+    wrapped function is a class method or not will determine
+    where the "info" argument is passed.
+    """
     for arg in args:
         if isinstance(arg, GraphQLResolveInfo):
             return arg
 
     return None
 
+
 def _default_context_resolver(request, resolve_info, *args, **kwargs):
+    """
+    This is the default method that creates context for the permission
+    resolution decorators.
+
+    It adds the request object, and the info object for gql methods,
+    the user object and the disambiguated "id" argument of the function,
+    if it exists.
+    """
     context = {
         "request": request,
         "resolve_info": resolve_info,
@@ -129,7 +144,7 @@ def protect_field(
             if not permission.apply_context(context).check_access(user.get_granting_scopes()):
                 raise PermissionDenied(fail_message)
 
-            return func(cls_or_self, info, *args, **kwargs)
+            return func(cls_or_self, *args, **kwargs)
 
         return wrapper
 
