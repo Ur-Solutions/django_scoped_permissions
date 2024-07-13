@@ -1,10 +1,28 @@
 from functools import wraps
 
 from django.core.exceptions import PermissionDenied
+from graphene_django_cud.util import disambiguate_id
+from pydash import omit
 from typing_extensions import deprecated
 
 from django_scoped_permissions.core.scoped_permission import sp, ScopedPermission
 from django_scoped_permissions.guards import ScopedPermissionGuard
+
+
+def _default_context_resolver(request, resolve_info, *args, **kwargs):
+    context = {
+        "request": request,
+        "resolve_info": resolve_info,
+        "user": request.user
+    }
+
+    if "id" in kwargs:
+        context["id"] = disambiguate_id(kwargs["id"])
+
+    return {
+        **context,
+        **omit(kwargs, "id"),
+    }
 
 
 def protect_view(
@@ -18,7 +36,6 @@ def protect_view(
         raise ValueError("fn must be a callable")
 
     resolve_context = kwargs.pop("resolve_context", None)
-
     permission = ScopedPermission.safe_create(*args, **kwargs, default=sp("*"))
 
     def decorator(func):
@@ -31,10 +48,7 @@ def protect_view(
             if not user or user.is_anonymous:
                 raise PermissionDenied(fail_message)
 
-            context = {}
-            context["request"] = request
-            context["context"] = request
-            context["user"] = request.user
+            context = _default_context_resolver(request, None, *args, **kwargs)
 
             if fn:
                 result = fn(request, *args, **kwargs)
@@ -93,10 +107,7 @@ def protect_field(
 
                 return func(cls, info, *args, **kwargs)
 
-            context = {}
-            context["request"] = info.context
-            context["context"] = info.context
-            context["user"] = info.context.user
+            context = _default_context_resolver(info.context, info, *args, **kwargs)
 
             if resolve_context and callable(resolve_context):
                 result = resolve_context(info, *args, **kwargs)
