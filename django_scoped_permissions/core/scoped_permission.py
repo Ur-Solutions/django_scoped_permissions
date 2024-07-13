@@ -9,7 +9,7 @@ from django_scoped_permissions.core.tree import ScopedPermissionTree
 from django_scoped_permissions.core.utils import interpolate_context
 from django_scoped_permissions.models import StoredScopedPermission
 
-VALID_SCOPE_CHARACTERS = re.compile(r"[a-zA-Z0-9_\-:{}]+")
+VALID_SCOPE_CHARACTERS = re.compile(r"[a-zA-Z0-9_\-:{}*]+")
 VALID_VERB_CHARACTERS = re.compile(r"[a-zA-Z0-9_\-{}]+")
 
 type ScopedPermissionLike = str | ScopedPermission | ScopedPermissionTree
