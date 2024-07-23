@@ -110,7 +110,7 @@ def protect_field(
     resolve_context = kwargs.pop("resolve_context", None)
 
     # Create a dummy permission when fn is supplied, just so the sp constructor doesn't fail
-    permission = sp(*args, **kwargs) if fn is None else sp("1")
+    permission = ScopedPermission.safe_create(*args, **kwargs, default=sp("*"))
 
     def decorator(func):
         @wraps(func)

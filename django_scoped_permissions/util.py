@@ -1,11 +1,16 @@
 import itertools
 import re
-from graphql import GraphQLError
-from typing import Mapping, Iterable, Union, List
 
-from django_scoped_permissions.models import ScopedModel
+from graphql import GraphQLError
+from typing import Mapping, Iterable, Union, List, TYPE_CHECKING
+
+from django_scoped_permissions.models import ScopedModel, ProtectedModelMixin
 
 from pydash import get
+
+if TYPE_CHECKING:
+    from django_scoped_permissions.core.scoped_permission import ScopedPermissionLike
+    from django_scoped_permissions.core.scoped_permission import ScopedPermission, sp
 
 
 def create_resolver_from_method(field_name, method):
@@ -18,42 +23,41 @@ def create_resolver_from_method(field_name, method):
     return resolver
 
 
-def create_resolver_from_scopes(field_name: str, permissions: Union[List[str], "ScopedPermissionGuard"]):
-    from django_scoped_permissions.guards import ScopedPermissionGuard
-
-    permission_guard = ScopedPermissionGuard(permissions)
+def create_resolver_from_scopes(field_name: str,
+                                permissions: "ScopedPermissionLike"):
+    required_permission = sp(permissions)
 
     def resolver(object, info, **args):
         user = info.context.user
 
         field_value = getattr(object, field_name, None)
 
-        field_value_is_scoped_model = isinstance(field_value, ScopedModel)
-        object_is_scoped_model = isinstance(object, ScopedModel)
+        field_value_is_protected_model = isinstance(field_value, ProtectedModelMixin)
+        object_is_protected_model = isinstance(object, ScopedModel)
 
-        field_value_base_scopes = [""]
-        object_base_scopes = [""]
+        field_value_required_permissions = [""]
+        object_required_permissions = [""]
 
         context = {}
 
-        if field_value_is_scoped_model:
-            field_value_base_scopes = field_value.get_base_scopes()
+        if field_value_is_protected_model:
+            field_value_required_permissions = field_value.get_required_permissions()
 
-        if object_is_scoped_model:
-            object_base_scopes = object.get_base_scopes()
+        if object_is_protected_model:
+            object_required_permissions = object.get_required_permissions()
 
         # Deprecated
-        context["base_scopes"] = field_value_base_scopes
-        context["required_scopes"] = field_value_base_scopes
-        context["field_scopes"] = object_base_scopes
+        context["base_scopes"] = field_value_required_permissions
+        context["required_scopes"] = field_value_required_permissions
+        context["field_scopes"] = object_required_permissions
 
         granting_permissions = (
-            user.get_granting_scopes()
-            if hasattr(user, "get_granting_scopes")
+            user.get_granting_permissions(context)
+            if hasattr(user, "get_granting_permissions")
             else []
         )
 
-        if not permission_guard.has_permission(granting_permissions, context=context):
+        if not required_permission.apply_context(context).check_access(granting_permissions):
             raise GraphQLError("You are not permitted to view this.")
 
         return field_value
@@ -62,7 +66,7 @@ def create_resolver_from_scopes(field_name: str, permissions: Union[List[str], "
 
 
 def expand_scopes(
-    scopes: Iterable[str], expansion_map: Mapping[str, Iterable[str]] = None
+        scopes: Iterable[str], expansion_map: Mapping[str, Iterable[str]] = None
 ) -> Iterable[str]:
     if expansion_map is None or len(list(expansion_map.values())) == 0:
         return scopes

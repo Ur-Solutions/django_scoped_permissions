@@ -19,6 +19,10 @@ def check_scoped_permission(
         required_permissions: List["ScopedPermissionLike"] = None,
         granting_permissions: List["ScopedPermissionLike"] = None,
 ) -> bool:
+    """
+    This is a helper method which checks if a granting permission provides access to a required permission.
+    """
+
     # Fail if both singular and plural variants are given
     if required_permission != "" and required_permissions is not None:
         raise ValueError("Only one of required_permission and required_permissions can be given")

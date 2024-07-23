@@ -1,5 +1,6 @@
 import graphene
 from addict import Dict
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 
@@ -8,6 +9,28 @@ from django_scoped_permissions.tests.factories import UserFactory
 
 
 class TestProtectView(TestCase):
+
+    def test_empty_arguments_provides_access_to_non_anonymous_user(self):
+        @protect_view()
+        def some_function(request):
+            return True
+
+        user = UserFactory.create()
+        context = Dict(user=user)
+
+        result = some_function(request=context)
+        self.assertTrue(result)
+
+    def test_empty_arguments_fails_to_non_anonymous_user(self):
+        @protect_view()
+        def some_function(request):
+            return True
+
+        user = AnonymousUser()
+        context = Dict(user=user)
+
+        with self.assertRaises(PermissionDenied):
+            some_function(request=context)
 
     def test_simple_protection_with_string(self):
         @protect_view("user:1@read")
@@ -49,7 +72,7 @@ class TestProtectView(TestCase):
             return False
 
         with self.assertRaises(PermissionDenied):
-            result = some_other_function(request=context)
+            some_other_function(request=context)
 
     def test_custom_fn(self):
 

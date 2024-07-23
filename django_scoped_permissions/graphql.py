@@ -17,6 +17,8 @@ from graphene_django_cud.mutations.update import (
     DjangoUpdateMutationOptions,
     DjangoUpdateMutation,
 )
+
+from django_scoped_permissions.core.scoped_permission import ScopedPermission
 from graphql import GraphQLError
 
 from django_scoped_permissions.guards import ScopedPermissionGuard
@@ -98,7 +100,7 @@ class ScopedDjangoNode(DjangoObjectType):
                     f"resolve_{field}",
                     create_resolver_from_scopes(field, [permissions]),
                 )
-            elif isinstance(permissions, ScopedPermissionGuard):
+            elif isinstance(permissions, ScopedPermission):
                 if hasattr(cls, f"resolve_{field}"):
                     continue
 
@@ -121,7 +123,7 @@ class ScopedDjangoNode(DjangoObjectType):
             raise GraphQLError("You are not permitted to view this.")
 
         granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
+            user.get_granting_permissions() if hasattr(user, "get_granting_permissions") else []
         )
 
         Model = cls._meta.model
