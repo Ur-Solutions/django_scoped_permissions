@@ -1,4 +1,4 @@
-from typing import Tuple, Mapping, Union, Iterable, List
+from typing import Tuple, Mapping, Union
 
 from graphene import Node
 from graphene_django import DjangoObjectType
@@ -10,7 +10,7 @@ from graphene_django_cud.mutations import (
     DjangoBatchDeleteMutation,
     DjangoFilterDeleteMutation, DjangoBatchPatchMutation, DjangoBatchUpdateMutation, DjangoFilterUpdateMutation,
 )
-from graphene_django_cud.mutations.create import DjangoCreateMutation
+from graphene_django_cud.mutations.create import DjangoCreateMutation, DjangoCreateMutationOptions
 from graphene_django_cud.mutations.delete import DjangoDeleteMutationOptions
 from graphene_django_cud.mutations.patch import DjangoPatchMutationOptions
 from graphene_django_cud.mutations.update import (
@@ -18,9 +18,7 @@ from graphene_django_cud.mutations.update import (
     DjangoUpdateMutation,
 )
 
-from django_scoped_permissions.core.scoped_permission import ScopedPermission
-from graphql import GraphQLError
-
+from django_scoped_permissions.core.scoped_permission import ScopedPermission, sp
 from django_scoped_permissions.guards import ScopedPermissionGuard
 from django_scoped_permissions.models import (
     ProtectedModelMixin,
@@ -30,6 +28,7 @@ from django_scoped_permissions.util import (
     create_resolver_from_method,
     create_resolver_from_scopes,
 )
+from graphql import GraphQLError
 
 
 class ScopedDjangoNodeOptions(DjangoObjectTypeOptions):
@@ -45,13 +44,13 @@ class ScopedDjangoNode(DjangoObjectType):
 
     @classmethod
     def __init_subclass_with_meta__(
-        cls,
-        node_permissions=None,
-        field_permissions=None,
-        allow_anonymous=False,
-        verb="read",
-        _meta=None,
-        **options,
+            cls,
+            node_permissions=None,
+            field_permissions=None,
+            allow_anonymous=False,
+            verb="read",
+            _meta=None,
+            **options,
     ):
         if not _meta:
             _meta = ScopedDjangoNodeOptions(cls)
@@ -118,43 +117,87 @@ class ScopedDjangoNode(DjangoObjectType):
     def get_node(cls, info, id):
         user = info.context.user
         if not cls._meta.allow_anonymous and not isinstance(
-            user, ScopedPermissionProviderMixin
+                user, ScopedPermissionProviderMixin
         ):
             raise GraphQLError("You are not permitted to view this.")
 
+        context = {
+            "request": info.context,
+            "context": info.context,
+            "user": user,
+            "id": id
+        }
+
         granting_permissions = (
-            user.get_granting_permissions() if hasattr(user, "get_granting_permissions") else []
+            user.get_granting_permissions(context) if hasattr(user, "get_granting_permissions") else []
         )
 
         Model = cls._meta.model
         queryset = Model.objects.all()
         obj = cls.get_queryset(queryset, info).get(pk=id)
 
-        context = {
-            "user": user,
-            "context": info.context,
-            # Deprecated
-            "obj": obj,
-        }
+        required_permissions = [sp(permission) for permission in cls._meta.node_permissions]
 
         if isinstance(obj, ProtectedModelMixin):
-            context["base_scopes"] = obj.get_base_scopes()
-            context["required_scopes"] = obj.get_required_permissions()
+            obj_required_permissions = obj.get_required_permissions(context)
+            required_permissions += obj_required_permissions
 
-        # If we have explicit permission, we check against the guard
-        if cls._meta.node_permissions:
-            if not cls._meta.permission_guard.has_permission(
-                granting_permissions, context
-            ):
-                raise GraphQLError("You are not permitted to view this.")
-        elif isinstance(obj, ProtectedModelMixin):
-            if not isinstance(user, ScopedPermissionProviderMixin):
-                raise GraphQLError("You are not permitted to view this.")
-
-            if not obj.can_be_accessed_by(user, cls._meta.verb):
-                raise GraphQLError("You are not permitted to view this.")
+        if not any(
+                required_permission.check_access(granting_permissions) for required_permission in required_permissions):
+            raise GraphQLError("You are not permitted to view this.")
 
         return super().get_node(info, id)
+
+
+def check_standard_create_or_batch_mutation_permissions(class_required_permissions, info, verb, input):
+    user = info.context.user
+    context = {
+        **(input or {}),
+        "context": info.context,
+        "request": info.context,
+        "input": input,
+        "verb": verb
+    }
+
+    granting_permissions = (
+        user.get_granting_permissions(context) if hasattr(user, "get_granting_permissions") else []
+    )
+
+    required_permissions = [permission.apply_context(context) for permission in class_required_permissions]
+
+    if not any(
+            required_permission.check_access(granting_permissions) for required_permission in required_permissions):
+        raise GraphQLError("You are not permitted to view this.")
+
+
+def check_standard_single_object_mutation_permissions(class_required_permissions, info, verb, input, id, obj):
+    user = info.context.user
+    context = {
+        **(input or {}),
+        "context": info.context,
+        "request": info.context,
+        "id": id,
+        "input": input,
+        "obj": obj,
+        "verb": verb
+    }
+
+    obj_required_permissions = obj.get_required_permissions(context) if hasattr(obj,
+                                                                                "get_required_permissions") else []
+    required_permissions = [permission.apply_context(context) for permission in
+                            class_required_permissions + obj_required_permissions]
+
+    granting_permissions = (
+        user.get_granting_permissions(context) if hasattr(user, "get_granting_permissions") else []
+    )
+
+    if not any(
+            required_permission.check_access(granting_permissions) for required_permission in required_permissions):
+        raise GraphQLError("You are not permitted to view this.")
+
+
+class ScopedDjangoCreateMutationOptions(DjangoCreateMutationOptions):
+    verb = "create"  # type: str
 
 
 class ScopedDjangoCreateMutation(DjangoCreateMutation):
@@ -163,19 +206,17 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
 
-        user = info.context.user
+    @classmethod
+    def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
+        if _meta is None:
+            _meta = ScopedDjangoCreateMutationOptions(cls)
 
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
+        _meta.verb = verb
 
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        return super().__init_subclass_with_meta__(_meta=_meta, **options)
 
 
 class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
@@ -184,22 +225,8 @@ class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
 
 
 class ScopedDjangoPatchMutationOptions(DjangoPatchMutationOptions):
@@ -211,48 +238,10 @@ class ScopedDjangoPatchMutation(DjangoPatchMutation):
         abstract = True
 
     @classmethod
-    def get_permissions(
-        cls, root, info, input, id, obj
-    ) -> Union[Iterable[str], ScopedPermissionGuard]:
-        super_permissions = super().get_permissions(root, info, input, id, obj) or []
-
-        if (
-            hasattr(super_permissions, "__len__")
-            and len(super_permissions) > 0
-            or isinstance(super_permissions, ScopedPermissionGuard)
-        ):
-            return super_permissions
-
-        # If we don't have explicit permissions we use some defaults here.
-        return ScopedPermissionGuard(scope="{required_scopes}", verb=cls._meta.verb)
-
-    @classmethod
     def check_permissions(cls, root, info, input, id, obj) -> None:
-        permissions = cls.get_permissions(root, info, input, id, obj) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {}
-
-        if isinstance(obj, ProtectedModelMixin):
-            context["base_scopes"] = obj.get_base_scopes()
-            context["required_scopes"] = obj.get_required_scopes()
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        context["context"] = info.context
-        context["input"] = input
-        context["id"] = id
-        context["obj"] = obj
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        required_permissions = [sp(permission) for permission in cls.get_permissions(root, info, input, id, obj) or []]
+        return check_standard_single_object_mutation_permissions(required_permissions, info, cls._meta.verb, input, id,
+                                                                 obj)
 
     @classmethod
     def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
@@ -274,22 +263,8 @@ class ScopedDjangoBatchPatchMutation(DjangoBatchPatchMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
 
     @classmethod
     def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
@@ -310,48 +285,10 @@ class ScopedDjangoUpdateMutation(DjangoUpdateMutation):
         abstract = True
 
     @classmethod
-    def get_permissions(
-        cls, root, info, input, id, obj
-    ) -> Union[Iterable[str], ScopedPermissionGuard]:
-        super_permissions = super().get_permissions(root, info, input, id, obj) or []
-
-        if (
-            hasattr(super_permissions, "__len__")
-            and len(super_permissions) > 0
-            or isinstance(super_permissions, ScopedPermissionGuard)
-        ):
-            return super_permissions
-
-        # If we don't have explicit permissions we use some defaults here.
-        return ScopedPermissionGuard(scope="{required_scopes}", verb=cls._meta.verb)
-
-    @classmethod
     def check_permissions(cls, root, info, input, id, obj) -> None:
-        permissions = cls.get_permissions(root, info, input, id, obj) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {}
-
-        if isinstance(obj, ProtectedModelMixin):
-            context["base_scopes"] = obj.get_base_scopes()
-            context["required_scopes"] = obj.get_required_scopes()
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        context["context"] = info.context
-        context["input"] = input
-        context["id"] = id
-        context["obj"] = obj
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        required_permissions = [sp(permission) for permission in cls.get_permissions(root, info, input, id, obj) or []]
+        return check_standard_single_object_mutation_permissions(required_permissions, info, cls._meta.verb, input, id,
+                                                                 obj)
 
     @classmethod
     def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
@@ -373,22 +310,8 @@ class ScopedDjangoBatchUpdateMutation(DjangoBatchUpdateMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
 
     @classmethod
     def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
@@ -409,23 +332,9 @@ class ScopedDjangoFilterUpdateMutation(DjangoFilterUpdateMutation):
         abstract = True
 
     @classmethod
-    def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+    def check_permissions(cls, root, info, filter, data) -> None:
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, filter, data) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
 
     @classmethod
     def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
@@ -446,46 +355,10 @@ class ScopedDjangoDeleteMutation(DjangoDeleteMutation):
         abstract = True
 
     @classmethod
-    def get_permissions(
-        cls, root, info, id, obj
-    ) -> Union[Iterable[str], ScopedPermissionGuard]:
-        super_permissions = super().get_permissions(root, info, id, obj) or []
-
-        if (
-            hasattr(super_permissions, "__len__")
-            and len(super_permissions) > 0
-            or isinstance(super_permissions, ScopedPermissionGuard)
-        ):
-            return super_permissions
-
-        return ScopedPermissionGuard(scope="{required_scopes}", verb=cls._meta.verb)
-
-    @classmethod
     def check_permissions(cls, root, info, id, obj) -> None:
-        permissions = cls.get_permissions(root, info, id, obj) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {}
-
-        if isinstance(obj, ProtectedModelMixin):
-            context["base_scopes"] = obj.get_base_scopes()
-            context["required_scopes"] = obj.get_required_scopes()
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        context["context"] = info.context
-        context["id"] = id
-        context["obj"] = obj
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        required_permissions = [sp(permission) for permission in cls.get_permissions(root, info, id, obj) or []]
+        return check_standard_single_object_mutation_permissions(required_permissions, info, cls._meta.verb, {}, id,
+                                                                 obj)
 
     @classmethod
     def __init_subclass_with_meta__(cls, _meta=None, verb="delete", **options):
@@ -503,22 +376,8 @@ class ScopedDjangoBatchDeleteMutation(DjangoBatchDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
 
 
 class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
@@ -527,19 +386,5 @@ class ScopedDjangoFilterDeleteMutation(DjangoFilterDeleteMutation):
 
     @classmethod
     def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
-
-        if not hasattr(permissions, "__len__") or len(permissions) == 0:
-            return
-
-        user = info.context.user
-
-        permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
-
-        granting_permissions = (
-            user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
-        )
-
-        if not permission_guard.has_permission(granting_permissions, context=context):
-            raise GraphQLError("You are not permitted to view this.")
+        permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
+        return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)

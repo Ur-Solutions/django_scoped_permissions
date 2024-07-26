@@ -2,22 +2,25 @@ import graphene
 from addict import Dict
 from django.test import TestCase
 from graphene import Node, Schema
+from graphql import GraphQLError
 from graphql_relay import to_global_id
 
+from django_scoped_permissions.core.scoped_permission import sp
 from django_scoped_permissions.graphql import (
     ScopedDjangoNode,
     ScopedDjangoCreateMutation,
     ScopedDjangoUpdateMutation,
-    ScopedDjangoPatchMutation,
+    ScopedDjangoPatchMutation, check_standard_create_or_batch_mutation_permissions,
+    check_standard_single_object_mutation_permissions,
 )
 from django_scoped_permissions.guards import ScopedPermissionGuard
-from django_scoped_permissions.tests.factories import UserFactory
+from django_scoped_permissions.tests.factories import UserFactory, UserWithScopedPermissionsFactory
 from django_scoped_permissions.tests.models import User
 
 
 class TestScopedDjangoNode(TestCase):
     def test__node_without_explicit_permissions__has_default_permission_handling(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -71,7 +74,7 @@ class TestScopedDjangoNode(TestCase):
         self.assertEqual("Tormod", data.user.firstName)
 
     def test__node_with_explicit_permissions__has_explicit_permission_handling(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -116,7 +119,7 @@ class TestScopedDjangoNode(TestCase):
         self.assertIsNotNone(result.errors)
 
     def test__node_with_permission_guards__has_explicit_permission_handling(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -163,7 +166,7 @@ class TestScopedDjangoNode(TestCase):
 
 class TestScopedCreateMutation(TestCase):
     def test__permissions_set__respects_permissions(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -217,7 +220,7 @@ class TestScopedCreateMutation(TestCase):
         self.assertEqual("tormod.haugland@gmail.com", data.createUser.user.email)
 
     def test__set_permission_via_guard__respects_permission(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -273,7 +276,7 @@ class TestScopedCreateMutation(TestCase):
 
 class TestScopedUpdateMutation(TestCase):
     def test__default_permission__uses_object_required_scopes(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -344,7 +347,7 @@ class TestScopedUpdateMutation(TestCase):
         self.assertIsNotNone(result.errors)
 
     def test__specific_permission__respects_permission(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -419,7 +422,7 @@ class TestScopedUpdateMutation(TestCase):
 
 class TestScopedPatchMutation(TestCase):
     def test__default_permission__uses_object_required_scopes(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -490,7 +493,7 @@ class TestScopedPatchMutation(TestCase):
         self.assertIsNotNone(result.errors)
 
     def test__specific_permission__respects_permission(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -565,7 +568,7 @@ class TestScopedPatchMutation(TestCase):
 
 class TestFieldPermissions(TestCase):
     def test__field_has_scoped_permission_in_string_form__is_properly_guarded(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -609,7 +612,7 @@ class TestFieldPermissions(TestCase):
         self.assertIsNotNone(result.errors)
 
     def test__field_has_scoped_permission_in_permission_guard_form__is_properly_guarded(
-        self,
+            self,
     ):
         # This registers the UserNode type
         # noinspection PyUnresolvedReferences
@@ -653,3 +656,69 @@ class TestFieldPermissions(TestCase):
             context=Dict(user=user_two),
         )
         self.assertIsNotNone(result.errors)
+
+
+class TestCheckStandardCreateOrBatchMutationPermissions(TestCase):
+    def test_user_with_granting_permissions_matches_required_does_not_raise(self):
+        user = UserWithScopedPermissionsFactory.create(
+            scoped_permissions=["user:1@read"]
+        )
+
+        info = Dict(context=Dict(user=user))
+        check_standard_create_or_batch_mutation_permissions(
+            [sp("user:1@read")], info, "create", None
+        )
+
+    def test_user_without_granting_permissions_raises(self):
+        user = UserWithScopedPermissionsFactory.create(
+            scoped_permissions=[]
+        )
+
+        info = Dict(context=Dict(user=user))
+        with self.assertRaises(GraphQLError):
+            check_standard_create_or_batch_mutation_permissions(
+                [sp("user:1@read")], info, "create", None
+            )
+
+    def test_context_is_applied(self):
+        user = UserWithScopedPermissionsFactory.create(
+            scoped_permissions=["user:1@read"]
+        )
+
+        info = Dict(context=Dict(user=user))
+        check_standard_create_or_batch_mutation_permissions(
+            [sp("user:{id}@{verb}")], info, "read", {"id": 1}
+        )
+
+
+class TestCheckStandardSingleObjectMutationPermissions(TestCase):
+    def test_user_with_granting_permissions_matches_required_does_not_raise(self):
+        user = UserWithScopedPermissionsFactory.create(
+            scoped_permissions=["user:1@read"]
+        )
+
+        info = Dict(context=Dict(user=user))
+        check_standard_single_object_mutation_permissions(
+            [sp("user:1@read")], info, "read", None, 1, None
+        )
+
+    def test_user_without_granting_permissions_raises(self):
+        user = UserWithScopedPermissionsFactory.create(
+            scoped_permissions=[]
+        )
+
+        info = Dict(context=Dict(user=user))
+        with self.assertRaises(GraphQLError):
+            check_standard_single_object_mutation_permissions(
+                [sp("user:1@read")], info, "read", None, 1, None
+            )
+
+    def test_context_is_applied(self):
+        user = UserWithScopedPermissionsFactory.create(
+            scoped_permissions=["user:1@read"]
+        )
+
+        info = Dict(context=Dict(user=user))
+        check_standard_single_object_mutation_permissions(
+            [sp("user:{id}@{verb}")], info, "read", {"id": 1}, 1, None
+        )
