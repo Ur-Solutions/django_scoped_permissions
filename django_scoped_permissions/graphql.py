@@ -151,12 +151,13 @@ class ScopedDjangoNode(DjangoObjectType):
 def check_standard_create_or_batch_mutation_permissions(class_required_permissions, info, verb, input):
     user = info.context.user
     context = {
-        **(input or {}),
         "context": info.context,
         "request": info.context,
         "input": input,
         "verb": verb
     }
+
+    context = inject_input_into_context(input, context)
 
     granting_permissions = (
         user.get_granting_permissions(context) if hasattr(user, "get_granting_permissions") else []
@@ -172,7 +173,6 @@ def check_standard_create_or_batch_mutation_permissions(class_required_permissio
 def check_standard_single_object_mutation_permissions(class_required_permissions, info, verb, input, id, obj):
     user = info.context.user
     context = {
-        **(input or {}),
         "context": info.context,
         "request": info.context,
         "id": id,
@@ -180,6 +180,7 @@ def check_standard_single_object_mutation_permissions(class_required_permissions
         "obj": obj,
         "verb": verb
     }
+    context = inject_input_into_context(input, context)
 
     obj_required_permissions = obj.get_required_permissions(context) if hasattr(obj,
                                                                                 "get_required_permissions") else []
@@ -193,6 +194,22 @@ def check_standard_single_object_mutation_permissions(class_required_permissions
     if not any(
             required_permission.check_access(granting_permissions) for required_permission in required_permissions):
         raise GraphQLError("You are not permitted to view this.")
+
+
+def inject_input_into_context(input, context):
+    if isinstance(input, dict):
+        return {
+            **input,
+            **context,
+        }
+
+    if isinstance(input, list):
+        return {
+            **{k: v for k, v in enumerate(input)},
+            **context,
+        }
+
+    return context
 
 
 class ScopedDjangoCreateMutationOptions(DjangoCreateMutationOptions):
