@@ -141,7 +141,7 @@ def protect_field(
                 if isinstance(result, dict):
                     context.update(result)
 
-            if not permission.apply_context(context).check_access(user.get_granting_scopes()):
+            if not permission.apply_context(context).check_access(user.get_granting_permissions(context)):
                 raise PermissionDenied(fail_message)
 
             return func(cls_or_self, *args, **kwargs)

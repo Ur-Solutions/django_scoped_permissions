@@ -126,7 +126,7 @@ class ScopedPermission:
         # grant verb-access by default
         verb_match = check_granting_scope_provides_access_to_required_scope(
             self.verb or "",
-            granting_permission.verb or ""
+            granting_permission.verb
         ) if granting_permission.verb else True
 
         return (scopes_match and verb_match) ^ is_negation
