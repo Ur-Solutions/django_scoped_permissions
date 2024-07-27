@@ -115,7 +115,7 @@ class ScopedDjangoNode(DjangoObjectType):
     @classmethod
     def get_node(cls, info, id):
         user = info.context.user
-        if not cls._meta.allow_anonymous and not getattr(user, "is_anonymous", False):
+        if not cls._meta.allow_anonymous and getattr(user, "is_anonymous", True):
             raise GraphQLError("You are not permitted to view this.")
 
         context = {
