@@ -2,11 +2,11 @@ from functools import reduce
 from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .scoped_permission import ScopedPermissionLike, ScopedPermission
+    from django_scoped_permissions.core.scoped_permission import ScopedPermissionLike, ScopedPermission
 
 
 def overload_scoped_permission_like(value: "ScopedPermissionLike") -> "ScopedPermission":
-    from .scoped_permission import ScopedPermission
+    from django_scoped_permissions.core.scoped_permission import ScopedPermission
     if isinstance(value, ScopedPermission):
         return value
     else:
@@ -45,4 +45,3 @@ def check_scoped_permission(
         return required_permissions[0].check_access(granting_permissions[0])
 
     return True
-

@@ -125,9 +125,9 @@ class ScopedPermission:
         # If the granting permission is a generic permission (has no verb), we
         # grant verb-access by default
         verb_match = check_granting_scope_provides_access_to_required_scope(
-            self.verb,
-            granting_permission.verb
-        ) if self.verb else True
+            self.verb or "",
+            granting_permission.verb or ""
+        ) if granting_permission.verb else True
 
         return (scopes_match and verb_match) ^ is_negation
 
