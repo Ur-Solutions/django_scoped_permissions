@@ -22,7 +22,6 @@ from django_scoped_permissions.core.scoped_permission import ScopedPermission, s
 from django_scoped_permissions.guards import ScopedPermissionGuard
 from django_scoped_permissions.models import (
     ProtectedModelMixin,
-    ScopedPermissionProviderMixin,
 )
 from django_scoped_permissions.util import (
     create_resolver_from_method,
@@ -116,9 +115,7 @@ class ScopedDjangoNode(DjangoObjectType):
     @classmethod
     def get_node(cls, info, id):
         user = info.context.user
-        if not cls._meta.allow_anonymous and not isinstance(
-                user, ScopedPermissionProviderMixin
-        ):
+        if not cls._meta.allow_anonymous and not getattr(user, "is_anonymous", False):
             raise GraphQLError("You are not permitted to view this.")
 
         context = {
@@ -136,14 +133,16 @@ class ScopedDjangoNode(DjangoObjectType):
         queryset = Model.objects.all()
         obj = cls.get_queryset(queryset, info).get(pk=id)
 
-        required_permissions = [sp(permission) for permission in cls._meta.node_permissions]
+        required_permissions = [sp(permission) for permission in
+                                cls._meta.node_permissions] if cls._meta.node_permissions else []
 
         if isinstance(obj, ProtectedModelMixin):
             obj_required_permissions = obj.get_required_permissions(context)
             required_permissions += obj_required_permissions
 
-        if not any(
-                required_permission.check_access(granting_permissions) for required_permission in required_permissions):
+        if len(required_permissions) > 0 and not any(
+                required_permission.check_access(granting_permissions) for required_permission in
+                required_permissions):
             raise GraphQLError("You are not permitted to view this.")
 
         return super().get_node(info, id)
