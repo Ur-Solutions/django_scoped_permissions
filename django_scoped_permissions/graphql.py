@@ -149,6 +149,10 @@ class ScopedDjangoNode(DjangoObjectType):
 
 
 def check_standard_create_or_batch_mutation_permissions(class_required_permissions, info, verb, input):
+
+    if len(class_required_permissions) == 0:
+        return
+
     user = info.context.user
     context = {
         "context": info.context,
@@ -171,6 +175,9 @@ def check_standard_create_or_batch_mutation_permissions(class_required_permissio
 
 
 def check_standard_single_object_mutation_permissions(class_required_permissions, info, verb, input, id, obj):
+    if len(class_required_permissions) == 0:
+        return
+
     user = info.context.user
     context = {
         "context": info.context,
