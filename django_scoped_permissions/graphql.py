@@ -136,7 +136,7 @@ class ScopedDjangoNode(DjangoObjectType):
         try:
             queryset = Model.objects.all()
             obj = cls.get_queryset(queryset, info).get(pk=id)
-        except Model.ObjectDoesNotExist:
+        except cls._meta.model.DoesNotExist:
             return None
 
         required_permissions = [sp(permission) for permission in
