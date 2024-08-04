@@ -9,7 +9,9 @@ from graphene_django_cud.mutations import (
     DjangoBatchCreateMutation,
     DjangoBatchDeleteMutation,
     DjangoFilterDeleteMutation, DjangoBatchPatchMutation, DjangoBatchUpdateMutation, DjangoFilterUpdateMutation,
+
 )
+from graphene_django_cud.mutations.batch_create import DjangoBatchCreateMutationOptions
 from graphene_django_cud.mutations.create import DjangoCreateMutation, DjangoCreateMutationOptions
 from graphene_django_cud.mutations.delete import DjangoDeleteMutationOptions
 from graphene_django_cud.mutations.patch import DjangoPatchMutationOptions
@@ -149,7 +151,6 @@ class ScopedDjangoNode(DjangoObjectType):
 
 
 def check_standard_create_or_batch_mutation_permissions(class_required_permissions, info, verb, input):
-
     if len(class_required_permissions) == 0:
         return
 
@@ -242,6 +243,10 @@ class ScopedDjangoCreateMutation(DjangoCreateMutation):
         return super().__init_subclass_with_meta__(_meta=_meta, **options)
 
 
+class ScopedDjangoBatchCreateMutationOptions(DjangoBatchCreateMutationOptions):
+    verb = "create"
+
+
 class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
     class Meta:
         abstract = True
@@ -250,6 +255,15 @@ class ScopedDjangoBatchCreateMutation(DjangoBatchCreateMutation):
     def check_permissions(cls, root, info, input) -> None:
         permissions = [sp(permission) for permission in cls.get_permissions(root, info, input) or []]
         return check_standard_create_or_batch_mutation_permissions(permissions, info, cls._meta.verb, input)
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, _meta=None, verb="update", **options):
+        if _meta is None:
+            _meta = ScopedDjangoBatchCreateMutationOptions(cls)
+
+        _meta.verb = verb
+
+        return super().__init_subclass_with_meta__(_meta=_meta, **options)
 
 
 class ScopedDjangoPatchMutationOptions(DjangoPatchMutationOptions):
