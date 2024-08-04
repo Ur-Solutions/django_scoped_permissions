@@ -132,8 +132,12 @@ class ScopedDjangoNode(DjangoObjectType):
         )
 
         Model = cls._meta.model
-        queryset = Model.objects.all()
-        obj = cls.get_queryset(queryset, info).get(pk=id)
+
+        try:
+            queryset = Model.objects.all()
+            obj = cls.get_queryset(queryset, info).get(pk=id)
+        except Model.ObjectDoesNotExist:
+            return None
 
         required_permissions = [sp(permission) for permission in
                                 cls._meta.node_permissions] if cls._meta.node_permissions else []
