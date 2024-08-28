@@ -43,7 +43,7 @@ sp("user", "2", verb="write") & sp("user", "1", verb="read")  # → "user:1&user
 
 ```python
 @protect_model(
-"user:{self.id}",
+    "user:{self.id}",
 )
 class User(AbstractUser):
     pass
@@ -55,7 +55,7 @@ class User(AbstractUser):
 
 ```python
 @protect_model(
-"user:{self.id}@{verb}",
+    "user:{self.id}@{verb}",
 )
 class User(AbstractUser):
 
@@ -73,15 +73,14 @@ class User(AbstractUser):
 ```python
 class User(AbstractUser):
     def get_required_permissions(self, provider):
-        return create_scoped_permission(f"user:{self.id}")
+        return sp(f"user:{self.id}")
 
     def check_access(self, provider: ScopedPermissionProvider):
-        if time.time() > self.last_accessed_at + 60:
+        if time.time() < self.last_accessed_at + 60:
             return True
 
         return check_scoped_permissions(provider.provides_permissions(),
                                         self.get_instance_required_permissions(provider))
-
 ```
 
 # Simpler API for providing permissions per model. The simplest way to do this is to add the provides_permissions method.
@@ -98,15 +97,17 @@ class User(AbstractUser):
 
 # What actually happens under the hood here is that the StatelessScopedPermissionProvider will be added, which has
 
-# a method "provides_permissions" which returns the list of permissions specified:
+# a method "get_granting_permissions" which returns the list of permissions specified:
 
+```python
 @provides_scoped_permissions(
-"user:{self.id}",
+    "user:{self.id}",
 )
 class User(AbstractUser, StatelessScopedPermissionProvider):
 
-    def provides_permissions(self):
+    def get_granting_permissions(self):
         return [f"user:{self.id}"]
+```
 
 # The stateful version can also be used, if you want the models to store permissions in the database:
 
@@ -119,40 +120,45 @@ class User(AbstractUser, ScopedPermissionProvider):
 
 # provides_scoped_permissions decorators:
 
+```python
 @provides_scoped_permissions(
-related_scope_providers=[
-{
-"model": "UserType",
-"field": "user_types",
-}
-],
-stateful=True
+    related_scope_providers=[
+        {
+            "model": "UserType",
+            "field": "user_types",
+        }
+    ],
+    stateful=True
 )
 class User(AbstractUser):
-pass
+    pass
+```
+
+```python
 
 # You can also implement it more directly
-
 class User(AbstractUser, ScopedPermissionProvider):
-def provides_permissions(self):
-user_types = self.user_types.all()
-permissions_from_user_types = [
-
-        ]
+    def get_permissions(self):
+        user_types = self.user_types.all()
+        permissions_from_user_types = []
 
         for user_type in user_types:
             permissions_from_user_types.append(user_type.provides_permissions())
 
         return permissions_from_user_types + super().provides_permissions()
+        
+```
 
 # If you want a mix of stateful and stateless permissions, you can use the following pattern:
 
+```python
 class User(AbstractUser, ScopedPermissionProvider):
 
     def provides_permissions(self):
         permissions_from_database = super().provides_permissions()
 
         return [f"user:{self.id}"] + permissions_from_database
+```
 
 # Better decorators
 
@@ -202,8 +208,9 @@ def some_view(request, user_id):
 
 # Integrations with graphene/graphene-django
 
+```python
 class Queries(graphene.ObjectType):
-user = graphene.Field(UserNode)
+    user = graphene.Field(UserNode)
 
     @protect_field(
         "user:{user.id}@read"
@@ -211,24 +218,29 @@ user = graphene.Field(UserNode)
     def resolve_user(self, info):
         return User.objects.get(pk=1)
 
+```
+
 ## This case will attach a permission check to the get_node method of the DjangoObjectType
 
+```python
 @protect_django_object_type(
-"user:{user.id}@read"
+    "user:{user.id}@read"
 )
 class UserNode(DjangoObjectType):
-class Meta:
-model = User
+    class Meta:
+        model = User
+```
 
 # We can also easily protect mutations.
 
+```python
 @protect_mutation(
-"user:{user.id}@update"
+    "user:{user.id}@update"
 )
 class ChangeUserMutation(graphene.Mutation):
-class Arguments:
-id = graphene.ID(required=True)
-name = graphene.String(required=True)
+    class Arguments:
+        id = graphene.ID(required=True)
+        name = graphene.String(required=True)
 
     user = graphene.Field(UserNode)
 
@@ -240,6 +252,7 @@ name = graphene.String(required=True)
         user.save()
 
         return ChangeUserMutation(user=user)
+```
 
 ## Finally, we can easily protect multiple fields on a single objecttype.
 
@@ -264,15 +277,17 @@ class UserQuery(graphene.ObjectType):
     )
     def resolve_user(self, info, id):
         return User.objects.get(pk=id)
-
 ```
+
 ## "context" is named "request" to adhere with the functional method API
 
+```python
 @protect_field(
-"user:{request.user.id}@read"
+    "user:{request.user.id}@read"
 )
 def resolve_me(self, info):
-return User.objects.get(pk=info.context.user.id)
+    return info.context.user
+```
 
 # Creating reusable permissions is now easier.
 
@@ -282,8 +297,9 @@ can_invite_users = create_scoped_permission("user@invite")
 
 ## These can now be used both in guards and in providers
 
+```python
 @provides_scoped_permissions(
-stateful=True,
+    stateful=True,
 )
 class User(AbstractUser):
 
@@ -298,6 +314,7 @@ class User(AbstractUser):
 
         permissions_from_database = super().provides_permissions()
         return permissions + permissions_from_database
+```
 
 # A simple API for flattening permissions
 
