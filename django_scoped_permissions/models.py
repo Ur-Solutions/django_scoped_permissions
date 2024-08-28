@@ -9,7 +9,7 @@ from django_scoped_permissions.core import any_scope_matches, scopes_grant_permi
 
 class ScopedPermission(models.Model):
     class Meta:
-        unique_together = (("scope", "exclude", "exact"),)
+        pass
 
     scope = models.TextField(blank=False)
     exclude = models.BooleanField(

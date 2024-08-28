@@ -19,8 +19,5 @@ class Migration(migrations.Migration):
                 ('exclude', models.BooleanField(default=False, help_text="Whether this should be an exclusive permission, meaning that if scope is 'user:update' and exclude is True then users with this usertype will not be able to update users, even their own.")),
                 ('exact', models.BooleanField(default=False, help_text='If checked, the permission needs an exact match to count. In other words, it does not work recursively as standard scoped permissions.')),
             ],
-            options={
-                'unique_together': {('scope', 'exclude', 'exact')},
-            },
         ),
     ]
