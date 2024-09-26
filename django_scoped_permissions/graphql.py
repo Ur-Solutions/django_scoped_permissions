@@ -58,7 +58,9 @@ class ScopedDjangoNode(DjangoObjectType):
         _meta.node_permissions = node_permissions
         _meta.field_permissions = field_permissions
         _meta.verb = verb
-        interfaces = options.get("interfaces", ()) + (Node,)
+
+        # Remove interfaces from options and add Node, ensuring only one interfaces gets added
+        interfaces = options.pop("interfaces", ()) + (Node,)
 
         # Great, the class is set up. Now let's add permission guards.
         field_permissions = field_permissions or {}
