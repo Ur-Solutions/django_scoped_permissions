@@ -40,13 +40,13 @@ files = [
 
 [[package]]
 name = "attrs"
-version = "25.2.0"
+version = "25.3.0"
 description = "Classes Without Boilerplate"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "attrs-25.2.0-py3-none-any.whl", hash = "sha256:611344ff0a5fed735d86d7784610c84f8126b95e549bcad9ff61b4242f2d386b"},
-    {file = "attrs-25.2.0.tar.gz", hash = "sha256:18a06db706db43ac232cce80443fcd9f2500702059ecf53489e3c5a3f417acaf"},
+    {file = "attrs-25.3.0-py3-none-any.whl", hash = "sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3"},
+    {file = "attrs-25.3.0.tar.gz", hash = "sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b"},
 ]
 
 [package.extras]
@@ -485,13 +485,13 @@ test = ["coveralls (>=3.3,<5)", "pytest (>=8,<9)", "pytest-asyncio (>=0.16,<2)",
 
 [[package]]
 name = "graphene-django"
-version = "3.2.2"
+version = "3.2.3"
 description = "Graphene Django integration"
 optional = false
 python-versions = "*"
 files = [
-    {file = "graphene-django-3.2.2.tar.gz", hash = "sha256:059ccf25d9a5159f28d7ebf1a648c993ab34deb064e80b70ca096aa22a609556"},
-    {file = "graphene_django-3.2.2-py2.py3-none-any.whl", hash = "sha256:0fd95c8c1cbe77ae2a5940045ce276803c3acbf200a156731e0c730f2776ae2c"},
+    {file = "graphene-django-3.2.3.tar.gz", hash = "sha256:d831bfe8e9a6e77e477b7854faef4addb318f386119a69ee4c57b74560f3e07d"},
+    {file = "graphene_django-3.2.3-py2.py3-none-any.whl", hash = "sha256:0c673a4dad315b26b4d18eb379ad0c7027fd6a36d23a1848b7c7c09a14a9271e"},
 ]
 
 [package.dependencies]
@@ -509,17 +509,16 @@ test = ["coveralls", "django-filter (>=22.1)", "djangorestframework (>=3.6.3)", 
 
 [[package]]
 name = "graphene-django-cud"
-version = "0.9.1"
+version = "0.13.0"
 description = "Create, update and delete mutations for graphene-django"
 optional = false
 python-versions = "*"
 files = [
-    {file = "graphene-django-cud-0.9.1.tar.gz", hash = "sha256:329bbb00a985464c096ae4f8f325666957fb9853a8006d36dcc8840c611e7ab9"},
-    {file = "graphene_django_cud-0.9.1-py2-none-any.whl", hash = "sha256:9be7f8c8a2a74e92461be5142f02b35238639f2275564d3f40b7ae82548d29bc"},
+    {file = "graphene_django_cud-0.13.0-py3-none-any.whl", hash = "sha256:6816884b75900282e24fc3105212fc191ccbc9ed6de43884d41565a4f7972e49"},
 ]
 
 [package.dependencies]
-graphene-django = ">=2.0"
+graphene-django = ">=3.0"
 graphene-file-upload = ">=1.2"
 
 [[package]]
@@ -1278,4 +1277,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a04c2905fa33b8ebb16046871ce4f2f9ac473693e732300126298c5bcbe71536"
+content-hash = "2c0569c474ffd22dcffd5ae01a3e5eb39f6cc374030cd2ed7e54b98f2094d333"
