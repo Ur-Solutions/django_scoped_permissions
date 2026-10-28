@@ -44,9 +44,9 @@ compile-messages:
 
 .PHONY: build
 build:
-	poetry run python setup.py sdist bdist_wheel
+	poetry build
 
 .PHONY: release
 release:
-	twine upload dist/*
+	poetry run twine upload dist/*
 

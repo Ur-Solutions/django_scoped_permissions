@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from django_scoped_permissions import ScopedPermissionTree
+from django_scoped_permissions.core.tree import ScopedPermissionTree
 
 
 class TestScopedPermissionTree(TestCase):

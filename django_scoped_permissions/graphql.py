@@ -407,8 +407,8 @@ class ScopedDjangoFilterUpdateMutation(DjangoFilterUpdateMutation):
         abstract = True
 
     @classmethod
-    def check_permissions(cls, root, info, input) -> None:
-        permissions = cls.get_permissions(root, info, input) or []
+    def check_permissions(cls, root, info, filter, data) -> None:
+        permissions = cls.get_permissions(root, info, filter, data) or []
 
         if not hasattr(permissions, "__len__") or len(permissions) == 0:
             return
@@ -416,7 +416,12 @@ class ScopedDjangoFilterUpdateMutation(DjangoFilterUpdateMutation):
         user = info.context.user
 
         permission_guard = ScopedPermissionGuard(permissions)
-        context = {"context": info.context, "input": input, "user": info.context.user}
+        context = {
+            "context": info.context,
+            "filter": filter,
+            "data": data,
+            "user": info.context.user,
+        }
 
         granting_permissions = (
             user.get_granting_scopes() if hasattr(user, "get_granting_scopes") else []
