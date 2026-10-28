@@ -15,6 +15,10 @@ from django_scoped_permissions.tests.factories import UserFactory
 from django_scoped_permissions.tests.models import User
 
 
+class MutationQuery(graphene.ObjectType):
+    health = graphene.Boolean()
+
+
 class TestScopedDjangoNode(TestCase):
     def test__node_without_explicit_permissions__has_default_permission_handling(
         self,
@@ -181,7 +185,7 @@ class TestScopedCreateMutation(TestCase):
         user = UserFactory.create()
         user.add_or_create_permission("user:create")
 
-        schema = Schema(mutation=Mutations)
+        schema = Schema(query=MutationQuery, mutation=Mutations)
         mutation = """
             mutation CreateUser(
                 $input: CreateUserInput! 
@@ -235,7 +239,7 @@ class TestScopedCreateMutation(TestCase):
         user = UserFactory.create()
         user.add_or_create_permission("user:create")
 
-        schema = Schema(mutation=Mutations)
+        schema = Schema(query=MutationQuery, mutation=Mutations)
         mutation = """
             mutation CreateUser(
                 $input: CreateUserInput! 
@@ -290,7 +294,7 @@ class TestScopedUpdateMutation(TestCase):
         user = UserFactory.create()
         user_two = UserFactory.create()
 
-        schema = Schema(mutation=Mutations)
+        schema = Schema(query=MutationQuery, mutation=Mutations)
         mutation = """
             mutation UpdateUser(
                 $id: ID!,
@@ -363,7 +367,7 @@ class TestScopedUpdateMutation(TestCase):
         user.add_or_create_permission("user:update")
         user_two = UserFactory.create()
 
-        schema = Schema(mutation=Mutations)
+        schema = Schema(query=MutationQuery, mutation=Mutations)
         mutation = """
             mutation UpdateUser(
                 $id: ID!,
@@ -436,7 +440,7 @@ class TestScopedPatchMutation(TestCase):
         user = UserFactory.create()
         user_two = UserFactory.create()
 
-        schema = Schema(mutation=Mutations)
+        schema = Schema(query=MutationQuery, mutation=Mutations)
         mutation = """
             mutation PatchUser(
                 $id: ID!,
@@ -509,7 +513,7 @@ class TestScopedPatchMutation(TestCase):
         user.add_or_create_permission("user:patch")
         user_two = UserFactory.create()
 
-        schema = Schema(mutation=Mutations)
+        schema = Schema(query=MutationQuery, mutation=Mutations)
         mutation = """
             mutation PatchUser(
                 $id: ID!,
