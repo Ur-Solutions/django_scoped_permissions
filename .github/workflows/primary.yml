@@ -57,7 +57,7 @@ jobs:
           POSTGRES_PASSWORD: ScopedTest-Compatibility2026
         ports: ["5432:5432"]
         options: >-
-          --health-cmd pg_isready --health-interval 5s
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
           --health-timeout 5s --health-retries 12
       sqlserver:
         image: ${{ matrix.database == 'mssql' && 'mcr.microsoft.com/mssql/server:2022-latest' || '' }}

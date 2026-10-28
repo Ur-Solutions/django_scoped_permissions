@@ -67,11 +67,11 @@ class TestScopesGrantPermission(TestCase):
 
 
 class TestHasScopedPermissionsMixin(TestCase):
-    def get_scopes__no_scopes__returns_empty_array(self):
+    def test_get_scopes__no_scopes__returns_user_scope(self):
         user = UserFactory.create()
 
-        # Users automatically get the user:1 scope
-        self.assertListEqual(user.get_granting_scopes(), ["user:1"])
+        # Users automatically get a scope for their own primary key
+        self.assertCountEqual(user.get_granting_scopes(), [f"user:{user.pk}"])
 
     def test_get_scopes__simple_scopes__returns_array(self):
         user = UserFactory.create()
@@ -82,9 +82,9 @@ class TestHasScopedPermissionsMixin(TestCase):
             ScopedPermission.objects.create(scope="simple:scope:deep")
         )
 
-        # Users automatically get the user:1 scope
-        self.assertListEqual(
-            user.get_granting_scopes(), ["simple:scope", "simple:scope:deep", "user:1"]
+        # Users automatically get a scope for their own primary key
+        self.assertCountEqual(
+            user.get_granting_scopes(), ["simple:scope", "simple:scope:deep", f"user:{user.pk}"]
         )
 
     def test_get_scopes__exclude_scopes__appends_minus_signs(self):
@@ -96,10 +96,10 @@ class TestHasScopedPermissionsMixin(TestCase):
             ScopedPermission.objects.create(scope="simple:scope:deep", exclude=True)
         )
 
-        # Users automatically get the user:1 scope
-        self.assertListEqual(
+        # Users automatically get a scope for their own primary key
+        self.assertCountEqual(
             user.get_granting_scopes(),
-            ["-simple:scope", "-simple:scope:deep", "user:1"],
+            ["-simple:scope", "-simple:scope:deep", f"user:{user.pk}"],
         )
 
     def test_get_scopes__exact_scopes__appends_equal_sign(self):
@@ -111,10 +111,10 @@ class TestHasScopedPermissionsMixin(TestCase):
             ScopedPermission.objects.create(scope="simple:scope:deep", exact=True)
         )
 
-        # Users automatically get the user:1 scope
-        self.assertListEqual(
+        # Users automatically get a scope for their own primary key
+        self.assertCountEqual(
             user.get_granting_scopes(),
-            ["=simple:scope", "=simple:scope:deep", "user:1"],
+            ["=simple:scope", "=simple:scope:deep", f"user:{user.pk}"],
         )
 
     def test_get_scopes__exact_and_negation_scopes__appends_equal_and_minus_sign(self):
@@ -130,10 +130,10 @@ class TestHasScopedPermissionsMixin(TestCase):
             )
         )
 
-        # Users automatically get the user:1 scope
-        self.assertListEqual(
+        # Users automatically get a scope for their own primary key
+        self.assertCountEqual(
             user.get_granting_scopes(),
-            ["-=simple:scope", "-=simple:scope:deep", "user:1"],
+            ["-=simple:scope", "-=simple:scope:deep", f"user:{user.pk}"],
         )
 
 
@@ -144,7 +144,7 @@ class TestScopedModelMixin(TestCase):
         user = UserFactory.create()
         user.scoped_permissions.add(
             ScopedPermission.objects.create(
-                scope="user:1", exclude=True, exact=True
+                scope=f"user:{user.pk}", exclude=True, exact=True
             )
         )
 
