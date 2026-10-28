@@ -2,64 +2,105 @@ name: Test and push
 
 on:
   push:
-    branches: [ develop, master ]
-    tags: [ v* ]
+    branches: [develop, master]
+    tags: [v*]
   pull_request:
-    branches: [ develop, master ]
+    branches: [develop, master, mist]
+
+permissions:
+  contents: read
 
 jobs:
   test:
-
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-
+        django: ["Django>=5.2,<5.3", "Django>=6.0,<6.1", "Django>=6.1,<6.2"]
+        factory: ["factory-boy==2.12.0", "factory-boy>=3,<4"]
     steps:
-    - uses: actions/checkout@v2
-    - name: set up python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
-      run: |
-        pip install poetry==1.0.0
-        poetry config virtualenvs.in-project true
-    - name: Cache pip
-      uses: actions/cache@v1
-      with:
-        path: .venv
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ matrix.python-version}}-pip-
-          ${{ runner.os }}-${{ matrix.python-version}}-
-          ${{ runner.os }}-
-    - name: Install dependencies
-      run: poetry install --no-interaction
-    - name: Test with coverage
-      run: |
-        make test-cov
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+      - name: Install locked dependencies
+        run: mise exec -- poetry install --no-interaction
+      - name: Select compatibility versions
+        env:
+          DJANGO: ${{ matrix.django }}
+          FACTORY: ${{ matrix.factory }}
+        run: mise exec -- poetry run python -m pip install "$DJANGO" "$FACTORY"
+      - name: Test permissions and GraphQL integration
+        run: mise exec -- make test-cov
+      - name: Check model migrations
+        run: mise exec -- poetry run python manage.py makemigrations --check --dry-run
+      - name: Build distributions
+        run: |
+          mise exec -- poetry check --lock
+          mise exec -- make build
+          mise exec -- poetry run twine check dist/*
+      - name: Check Mist's existing Pydash dependency
+        if: matrix.django == 'Django>=5.2,<5.3' && matrix.factory == 'factory-boy>=3,<4'
+        run: |
+          mise exec -- poetry run python -m pip install 'pydash==4.9.3' 'setuptools==80.9.0'
+          mise exec -- make test
+
+  database:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        django: ["Django>=5.2,<5.3", "Django>=6.0,<6.1", "Django>=6.1,<6.2"]
+        database: [postgresql, mssql]
+    services:
+      postgres:
+        image: ${{ matrix.database == 'postgresql' && 'postgres:17-alpine' || '' }}
+        env:
+          POSTGRES_PASSWORD: ScopedTest-Compatibility2026
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 12
+      sqlserver:
+        image: ${{ matrix.database == 'mssql' && 'mcr.microsoft.com/mssql/server:2022-latest' || '' }}
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: ScopedTest-Compatibility2026
+        ports: ["1433:1433"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+      - name: Install SQL Server driver
+        if: matrix.database == 'mssql'
+        run: |
+          curl -fsSLo /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
+          sudo dpkg -i /tmp/packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+          rm /tmp/packages-microsoft-prod.deb
+      - name: Install dependencies and database backend
+        env:
+          DJANGO: ${{ matrix.django }}
+          BACKEND: ${{ matrix.database == 'mssql' && 'mssql-django>=2,<3' || 'psycopg[binary]>=3,<4' }}
+        run: |
+          mise exec -- poetry install --no-interaction
+          mise exec -- poetry run python -m pip install "$DJANGO" "$BACKEND" 'factory-boy>=3,<4'
+      - name: Test migrations, permissions and GraphQL against database
+        env:
+          SCOPED_TEST_DATABASE: ${{ matrix.database }}
+          SCOPED_TEST_PASSWORD: ScopedTest-Compatibility2026
+        run: mise exec -- make test
+
   release:
-    needs: test
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-    runs-on: ubuntu-18.04
+    needs: [test, database]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
     env:
       TWINE_USERNAME: __token__
       TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - name: Install dependencies
-      run: |
-        pip install twine
-        pip install wheel
-        pip install poetry==1.1.4
-        poetry config virtualenvs.create false
-        poetry install --no-interaction
-    - name: Build package
-      run: make build
-    - name: Publish package
-      run: make release
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+      - name: Build and publish package
+        run: |
+          mise exec -- poetry install --no-interaction
+          mise exec -- make build
+          mise exec -- make release

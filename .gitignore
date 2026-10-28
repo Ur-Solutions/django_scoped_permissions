@@ -145,3 +145,6 @@ dmypy.json
 static/
 
 .testmondata
+
+# macOS Finder metadata
+.DS_Store
