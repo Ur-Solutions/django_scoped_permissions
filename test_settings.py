@@ -2,7 +2,8 @@ import os
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-SECRET_KEY = 1
+SECRET_KEY = "scoped-permissions-test-only-secret"
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 DEBUG = True
 
 INSTALLED_APPS = [
@@ -31,6 +32,29 @@ MIDDLEWARE = [
 DATABASES = {
     "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "django_test.sqlite"}
 }
+
+# Only disposable test databases belong here. pytest-django creates and drops
+# test_scoped_permissions; it never needs access to an application's database.
+TEST_DATABASE = os.environ.get("SCOPED_TEST_DATABASE", "sqlite")
+if TEST_DATABASE in {"postgresql", "mssql"}:
+    DATABASES["default"] = {
+        "ENGINE": "mssql" if TEST_DATABASE == "mssql" else "django.db.backends.postgresql",
+        "NAME": "master" if TEST_DATABASE == "mssql" else "postgres",
+        "HOST": os.environ.get("SCOPED_TEST_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("SCOPED_TEST_PORT", "1433" if TEST_DATABASE == "mssql" else "5432"),
+        "USER": os.environ.get("SCOPED_TEST_USER", "sa" if TEST_DATABASE == "mssql" else "postgres"),
+        "PASSWORD": os.environ["SCOPED_TEST_PASSWORD"],
+        "TEST": {"NAME": "test_scoped_permissions"},
+    }
+    if TEST_DATABASE == "mssql":
+        DATABASES["default"]["OPTIONS"] = {
+            "driver": "ODBC Driver 18 for SQL Server",
+            "extra_params": "TrustServerCertificate=yes",
+            "connection_retries": 12,
+            "connection_retry_backoff_time": 5,
+        }
+elif TEST_DATABASE != "sqlite":
+    raise ValueError(f"Unknown SCOPED_TEST_DATABASE: {TEST_DATABASE}")
 
 TEMPLATES = [
     {

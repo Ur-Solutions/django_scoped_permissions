@@ -40,11 +40,12 @@ class TestGqlHasScopedPermissions(TestCase):
             pass
 
         user = UserFactory.create()
-        perm = ScopedPermission.objects.create(scope="company:1")
+        company = CompanyFactory.create()
+        perm = ScopedPermission.objects.create(scope=f"company:{company.pk}")
         user.scoped_permissions.add(perm)
         info = Dict()
         info.context.user = user
-        info.context.company = CompanyFactory.create()
+        info.context.company = company
         wrapper_method(None, info)
 
     def test__multiple_permisions__becomes_or_statement_by_default(self):

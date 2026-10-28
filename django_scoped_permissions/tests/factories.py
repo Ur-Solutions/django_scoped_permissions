@@ -1,9 +1,10 @@
 import factory
+from factory.django import DjangoModelFactory
 
 from django_scoped_permissions.tests.models import User, Pet, Company
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
 
@@ -13,7 +14,7 @@ class UserFactory(factory.DjangoModelFactory):
     email = factory.Sequence(lambda n: "user-%d@ursolutions.no" % n)
 
 
-class PetFactory(factory.DjangoModelFactory):
+class PetFactory(DjangoModelFactory):
     class Meta:
         model = Pet
 
@@ -22,7 +23,7 @@ class PetFactory(factory.DjangoModelFactory):
     age = 10
 
 
-class CompanyFactory(factory.DjangoModelFactory):
+class CompanyFactory(DjangoModelFactory):
     class Meta:
         model = Company
 
