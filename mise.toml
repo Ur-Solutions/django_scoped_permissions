@@ -1,0 +1,10 @@
+[tool_alias]
+poetry = "pypi:poetry"
+
+[tools]
+python = "3.12.9"
+uv = "0.12.23"
+poetry = { version = "2.3.2", depends = ["python", "uv"], install_env = { UV_PYTHON = "3.12.9", UV_PYTHON_DOWNLOADS = "never" } }
+
+[env]
+POETRY_VIRTUALENVS_IN_PROJECT = "true"

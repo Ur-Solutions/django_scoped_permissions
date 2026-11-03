@@ -2,7 +2,8 @@ import os
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-SECRET_KEY = 1
+SECRET_KEY = "scoped-permissions-test-only-secret"
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 DEBUG = True
 
 INSTALLED_APPS = [
