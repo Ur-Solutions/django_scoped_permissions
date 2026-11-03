@@ -18,6 +18,18 @@ more specific access rules.
 - View and field decorators and Graphene-Django integrations apply permission
   checks at application boundaries.
 
+## Upgrading the stored permission schema
+
+Migration `0003_stored_scoped_permission` renames the permission model and its
+flags, preserving permission IDs and scope values. Existing permissions receive
+a null `verb`; scopes are not parsed or rewritten.
+
+The current model has no permission groups. If legacy groups exist, the migration
+stops before changing the schema. Move their grants and assignments into your
+application's permission holders and remove the old groups before retrying.
+Consumer applications must also update their model references and migrations.
+This migration is forward-only: the old schema cannot represent separate verbs.
+
 ## Compatibility
 
 CI covers these Python and Django combinations:
