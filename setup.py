@@ -18,7 +18,6 @@ setuptools.setup(
         "django>=5.2,<7",
         "graphene-django>=3.2.3,<4",
         "graphene-django-cud>=0.13,<0.14",
-        "pyjwt>=1.7.1,<2",
         "pydash>=4.7.6,<9",
     ],
     classifiers=[
